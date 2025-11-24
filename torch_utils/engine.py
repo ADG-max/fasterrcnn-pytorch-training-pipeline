@@ -131,6 +131,11 @@ def evaluate(
     header = "Test:"
 
     coco = get_coco_api_from_dataset(data_loader.dataset)
+    if 'info' not in coco.dataset:
+        coco.dataset['info'] = {
+            "description": "Dataset",
+            "version": "1.0"
+        }
     iou_types = _get_iou_types(model)
     coco_evaluator = CocoEvaluator(coco, iou_types)
 
