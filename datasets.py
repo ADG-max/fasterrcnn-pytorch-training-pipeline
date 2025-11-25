@@ -53,6 +53,20 @@ class CustomDataset(Dataset):
         self.all_annot_paths = glob.glob(os.path.join(self.labels_path, '*.xml'))
         self.all_images = [image_path.split(os.path.sep)[-1] for image_path in self.all_image_paths]
         self.all_images = sorted(self.all_images)
+        # Collect labels per image for WeightedRandomSampler
+        self.image_labels = []
+        for img in self.all_images:
+            xml_path = os.path.join(self.labels_path, os.path.splitext(img)[0] + ".xml")
+            tree = et.parse(xml_path)
+            root = tree.getroot()
+        
+            # ambil label pertama tiap gambar (atau semua jika mau)
+            labels = [self.classes.index(obj.find('name').text) for obj in root.findall('object')]
+            if len(labels) > 0:
+                self.image_labels.append(labels[0])
+            else:
+                self.image_labels.append(-1)  # no object
+
         # Remove all annotations and images when no object is present.
         if self.label_type == 'pascal_voc':
             self.read_and_clean()
