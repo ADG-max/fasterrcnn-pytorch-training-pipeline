@@ -293,7 +293,20 @@ def main(args):
             valid_dataset, shuffle=False
         )
     else:
-        train_sampler = RandomSampler(train_dataset)
+        from torch.utils.data import WeightedRandomSampler
+
+        # hitung weight kelas
+        labels = [ann['labels'] for ann in train_dataset.annotations]
+        class_counts = np.bincount([l[0] for l in labels])
+        class_weights = 1. / class_counts
+        sample_weights = [class_weights[l[0]] for l in labels]
+        
+        train_sampler = WeightedRandomSampler(
+            weights=sample_weights,
+            num_samples=len(sample_weights),
+            replacement=True
+        )
+
         valid_sampler = SequentialSampler(valid_dataset)
 
     train_loader = create_train_loader(
