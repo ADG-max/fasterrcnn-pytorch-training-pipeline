@@ -18,7 +18,7 @@ from torch_utils.engine import (
     train_one_epoch, evaluate, utils
 )
 from torch.utils.data import (
-    distributed, RandomSampler, SequentialSampler
+    distributed, WeightedRandomSampler, SequentialSampler
 )
 from datasets import (
     create_train_dataset, create_valid_dataset, 
@@ -293,8 +293,6 @@ def main(args):
             valid_dataset, shuffle=False
         )
     else:
-        from torch.utils.data import WeightedRandomSampler
-
         # hitung weight kelas
         labels = [ann['labels'] for ann in train_dataset.annotations]
         class_counts = np.bincount([l[0] for l in labels])
