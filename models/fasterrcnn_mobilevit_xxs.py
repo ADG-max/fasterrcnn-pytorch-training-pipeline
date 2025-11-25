@@ -19,7 +19,7 @@ except:
     print('You can do pip install vision_transformers')
     print('Or visit the following link for the latest updates')
     print('https://github.com/sovit-123/vision_transformers')
-    assert ('vision_transformers' in sys.modules), 'vision_transformers not found'
+    #assert ('vision_transformers' in sys.modules), 'vision_transformers not found'
 
 def create_model(num_classes, pretrained=True, coco_model=False):
     # Load the backbone.
