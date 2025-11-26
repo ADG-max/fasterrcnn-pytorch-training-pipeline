@@ -414,16 +414,21 @@ def main(args):
     params = [p for p in model.parameters() if p.requires_grad]
     # Define the optimizer.
 
-    if args['optimizer'] is not None:
-        optimizer = getattr(torch.optim, args['optimizer'])(params, lr=args['lr'], momentum=0.9, nesterov=True)
-        print(f"Using {optimizer} for {args['model']}")
+    if args['optimizer'] == 'AdamW':
+        optimizer = torch.optim.AdamW(params, lr=args['lr'], weight_decay=1e-4)
+        print(f"Using AdamW for {args['model']}")
+    elif args['optimizer'] == 'SGD':
+        optimizer = torch.optim.SGD(params, lr=args['lr'], momentum=0.9, nesterov=True)
+        print(f"Using SGD for {args['model']}")
     else:
+        # default behavior
         if 'dinov3' in args['model']:
-            optimizer = torch.optim.AdamW(params, lr=args['lr'])
-            print(f"Using {optimizer} for {args['model']}")
+            optimizer = torch.optim.AdamW(params, lr=args['lr'], weight_decay=1e-4)
+            print(f"Using default AdamW for {args['model']}")
         else:
             optimizer = torch.optim.SGD(params, lr=args['lr'], momentum=0.9, nesterov=True)
-            print(f"Using {optimizer} for {args['model']}")
+            print(f"Using default SGD for {args['model']}")
+
     if args['resume_training']: 
         # LOAD THE OPTIMIZER STATE DICTIONARY FROM THE CHECKPOINT.
         print('Loading optimizer state dictionary...')
