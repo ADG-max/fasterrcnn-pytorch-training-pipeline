@@ -297,6 +297,7 @@ def main(args):
         labels = train_dataset.image_labels
         labels = [l for l in labels if l >= 0]  # remove empty labels
         class_counts = np.bincount(labels)
+        class_counts[class_counts == 0] = 1
         class_weights = 1.0 / class_counts
         sample_weights = [class_weights[l] for l in labels]
         
