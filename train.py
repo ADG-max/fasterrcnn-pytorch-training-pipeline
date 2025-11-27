@@ -256,7 +256,7 @@ def main(args):
     VISUALIZE_TRANSFORMED_IMAGES = args['vis_transformed']
     OUT_DIR = set_training_dir(args['name'], args['project_dir'])
     COLORS = np.random.uniform(0, 1, size=(len(CLASSES), 3))
-    SCALER = torch.cuda.amp.GradScaler() if args['amp'] else None
+    SCALER = torch.amp.GradScaler("cuda") if args['amp'] else None
     # Set logging file.
     set_log(OUT_DIR)
     writer = set_summary_writer(OUT_DIR)
