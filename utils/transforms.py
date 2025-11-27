@@ -36,14 +36,12 @@ def get_train_aug():
             p=0.3
         ),
         A.RandomFog(
-            fog_coef_lower=0.05,
-            fog_coef_upper=0.2,
+            fog_coef=(0.05, 0.2),
             alpha_coef=0.06,
             p=0.15
         ),
         A.ImageCompression(
-            quality_lower=40,
-            quality_upper=80,
+            quality_range=(40, 80),
             p=0.3
         ),
         A.RandomGamma(gamma_limit=(80,120), p=0.2),
