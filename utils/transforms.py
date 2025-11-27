@@ -25,7 +25,7 @@ def get_train_aug():
             scale=(0.9, 1.1),
             rotate=(-5, 5),
             fit_output=False,
-            mode=0,
+            interpolation=cv2.INTER_LINEAR,
             p=0.3
         ),
         A.OneOf([
