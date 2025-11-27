@@ -36,7 +36,6 @@ def get_train_aug():
             p=0.3
         ),
         A.RandomFog(
-            fog_coef=(0.05, 0.2),
             alpha_coef=0.06,
             p=0.15
         ),
