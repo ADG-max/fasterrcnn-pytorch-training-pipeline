@@ -20,30 +20,31 @@ def resize(im, img_size=640, square=False):
 def get_train_aug():
     return A.Compose([
         A.OneOf([
+            A.MotionBlur(blur_limit=5, p=0.4),
             A.GaussianBlur(blur_limit=(3,5), p=0.3),
-            A.MotionBlur(blur_limit=5, p=0.3),
         ], p=0.5),
         A.RandomBrightnessContrast(
-            brightness_limit=0.25,
-            contrast_limit=0.25,
+            brightness_limit=0.2,
+            contrast_limit=0.2,
             p=0.3
         ),
         A.ColorJitter(
-            brightness=0.2,
-            contrast=0.2,
-            saturation=0.2,
-            hue=0.05,
-            p=0.3
+            brightness=0.15,
+            contrast=0.15,
+            saturation=0.15,
+            hue=0.02,
+            p=0.2
         ),
         A.RandomFog(
-            alpha_coef=0.06,
+            alpha_coef=0.04,
             p=0.15
         ),
-        A.ImageCompression(
-            quality_range=(40, 80),
-            p=0.3
+        A.RandomSunFlare(
+            flare_roi=(0, 0, 1, 0.5),
+            angle_lower=0.3,
+            p=0.15
         ),
-        A.RandomGamma(gamma_limit=(80,120), p=0.2),
+        A.RandomGamma(gamma_limit=(90,110), p=0.15),
         ToTensorV2(p=1.0),
     ], bbox_params=A.BboxParams(
         format='pascal_voc',
