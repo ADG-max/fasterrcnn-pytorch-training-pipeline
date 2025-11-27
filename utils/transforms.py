@@ -19,6 +19,14 @@ def resize(im, img_size=640, square=False):
 # Define the training tranforms
 def get_train_aug():
     return A.Compose([
+        A.HorizontalFlip(p=0.5),
+        A.ShiftScaleRotate(
+            shift_limit=0.05,
+            scale_limit=0.1,
+            rotate_limit=5,
+            border_mode=0,
+            p=0.3
+        ),
         A.OneOf([
             A.MotionBlur(blur_limit=5, p=0.4),
             A.GaussianBlur(blur_limit=(3,5), p=0.3),
@@ -35,15 +43,10 @@ def get_train_aug():
             hue=0.02,
             p=0.2
         ),
-        A.RandomFog(
-            alpha_coef=0.04,
-            p=0.15
-        ),
-        A.RandomSunFlare(
-            flare_roi=(0, 0, 1, 0.5),
-            angle_lower=0.3,
-            p=0.15
-        ),
+        A.RandomFog(alpha_coef=0.04, p=0.15),
+        A.RandomSunFlare(flare_roi=(0,0,1,0.5), angle_lower=0.3, p=0.15),
+        A.RandomShadow(p=0.15),
+        A.CLAHE(p=0.1),
         A.RandomGamma(gamma_limit=(90,110), p=0.15),
         ToTensorV2(p=1.0),
     ], bbox_params=A.BboxParams(
