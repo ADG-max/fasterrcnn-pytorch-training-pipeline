@@ -21,27 +21,20 @@ def get_train_aug():
     return A.Compose([
         A.HorizontalFlip(p=0.5),
         A.Affine(
-            translate_percent={"x": 0.05, "y": 0.05},
-            scale=(0.9, 1.1),
-            rotate=(-5, 5),
+            translate_percent={"x": 0.04, "y": 0.04},
+            scale=(0.92, 1.08),
+            rotate=(-4, 4),
             fit_output=False,
             interpolation=cv2.INTER_LINEAR,
             p=0.3
         ),
         A.OneOf([
-            A.MotionBlur(blur_limit=5, p=0.4),
+            A.MotionBlur(blur_limit=4, p=0.4),
             A.GaussianBlur(blur_limit=(3,5), p=0.3),
         ], p=0.5),
-        A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.3),
-        A.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15, hue=0.02, p=0.2),
-        A.RandomFog(alpha_coef=0.04, p=0.15),
-        A.RandomSunFlare(
-            flare_roi=(0,0,1,0.5),
-            src_radius=120,
-            p=0.15
-        ),
-        A.RandomShadow(p=0.15),
-        A.CLAHE(p=0.1),
+        A.RandomBrightnessContrast(brightness_limit=0.15, contrast_limit=0.15, p=0.3),
+        A.ColorJitter(brightness=0.12, contrast=0.12, saturation=0.12, hue=0.015, p=0.2),
+        A.RandomFog(alpha_coef=0.02, p=0.10),
         A.RandomGamma(gamma_limit=(90,110), p=0.15),
         ToTensorV2(p=1.0),
     ], bbox_params=A.BboxParams(
