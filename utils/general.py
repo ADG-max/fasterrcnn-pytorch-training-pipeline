@@ -8,6 +8,14 @@ import random
 
 from pathlib import Path
 
+LABEL_BG = {
+    "Fire":   (120, 0, 0),     # Fire = merah gelap
+    "Smoke":  (0, 120, 120),   # Smoke = cyan gelap
+    "Other":  (120, 120, 0),   # Other = kuning gelap
+}
+
+LABEL_TEXT_COLOR = (255, 255, 255)  # putih
+
 plt.style.use('ggplot')
 
 def init_seeds(seed=0, deterministic=False):
