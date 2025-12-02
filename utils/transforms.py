@@ -4,6 +4,81 @@ import cv2
 
 from albumentations.pytorch import ToTensorV2
 from torchvision import transforms as transforms
+import random
+import copy
+
+def is_small_object(box, img_h, img_w, thr=0.015):
+    x1, y1, x2, y2 = box
+    area = (x2 - x1) * (y2 - y1)
+    return area < thr * img_h * img_w
+
+def small_object_copy_paste(image, boxes, labels, max_copy=4):
+    h, w = image.shape[:2]
+    new_boxes = boxes.copy()
+    new_labels = labels.copy()
+    img = image.copy()
+
+    small_indices = [i for i, b in enumerate(boxes) if is_small_object(b, h, w)]
+    if len(small_indices) == 0:
+        return img, new_boxes, new_labels
+
+    for _ in range(min(max_copy, len(small_indices))):
+        idx = random.choice(small_indices)
+        x1, y1, x2, y2 = boxes[idx]
+
+        obj = img[int(y1):int(y2), int(x1):int(x2)]
+        oh, ow = obj.shape[:2]
+
+        nx = random.randint(0, w - ow - 1)
+        ny = random.randint(0, h - oh - 1)
+
+        img[ny:ny+oh, nx:nx+ow] = obj
+
+        new_boxes.append([nx, ny, nx+ow, ny+oh])
+        new_labels.append(labels[idx])
+
+    return img, new_boxes, new_labels
+
+def zoom_in_small_object(image, boxes, prob=0.25, zoom=1.8):
+    if random.random() > prob:
+        return image, boxes
+
+    h, w = image.shape[:2]
+    candidate = None
+
+    for b in boxes:
+        if is_small_object(b, h, w):
+            candidate = b
+            break
+
+    if candidate is None:
+        return image, boxes
+
+    x1, y1, x2, y2 = map(int, candidate)
+    crop = image[y1:y2, x1:x2]
+    if crop.size == 0:
+        return image, boxes
+
+    zh = int((y2 - y1) * zoom)
+    zw = int((x2 - x1) * zoom)
+
+    crop_zoom = cv2.resize(crop, (zw, zh))
+
+    nx = random.randint(0, max(1, w - zw))
+    ny = random.randint(0, max(1, h - zh))
+
+    new_img = image.copy()
+    new_img[ny:ny+zh, nx:nx+zw] = crop_zoom
+
+    new_boxes = [b for b in boxes]
+    new_boxes.append([nx, ny, nx+zw, ny+zh])
+
+    return new_img, new_boxes
+
+def apply_small_object_aug(image, boxes, labels):
+    image, boxes, labels = small_object_copy_paste(image, boxes, labels)
+    image, boxes = zoom_in_small_object(image, boxes)
+    return image, boxes, labels
 
 def resize(im, img_size=640, square=False):
     # Aspect ratio resize
@@ -21,25 +96,26 @@ def get_train_aug():
     return A.Compose([
         A.HorizontalFlip(p=0.5),
         A.Affine(
-            translate_percent={"x": 0.04, "y": 0.04},
-            scale=(0.92, 1.08),
-            rotate=(-4, 4),
+            translate_percent={"x": 0.03, "y": 0.03},
+            scale=(0.95, 1.05),
+            rotate=(-3, 3),
             fit_output=False,
             interpolation=cv2.INTER_LINEAR,
-            p=0.3
+            p=0.25
         ),
         A.OneOf([
             A.MotionBlur(blur_limit=3, p=0.4),
             A.GaussianBlur(blur_limit=(3,5), p=0.3),
-        ], p=0.5),
-        A.RandomBrightnessContrast(brightness_limit=0.15, contrast_limit=0.15, p=0.3),
-        A.ColorJitter(brightness=0.12, contrast=0.12, saturation=0.12, hue=0.015, p=0.2),
-        A.RandomFog(alpha_coef=0.02, p=0.10),
+        ], p=0.45),
+        A.RandomBrightnessContrast(brightness_limit=0.18, contrast_limit=0.18, p=0.3),
+        A.ColorJitter(brightness=0.12, contrast=0.12, saturation=0.12, hue=0.012, p=0.25),
+        A.RandomFog(alpha_coef=0.025, p=0.10),
         A.RandomGamma(gamma_limit=(90,110), p=0.15),
         ToTensorV2(p=1.0),
     ], bbox_params=A.BboxParams(
         format='pascal_voc',
         label_fields=['labels'],
+        min_visibility=0.25,
     ))
 
 def get_train_transform():
