@@ -52,7 +52,9 @@ import os
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
-RANK = int(os.getenv('RANK', -1))
+RANK = int(os.getenv('RANK', os.getenv('LOCAL_RANK', -1)))
+WORLD_SIZE = int(os.getenv('WORLD_SIZE', '1'))
+LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))
 
 # For same annotation colors each time.
 np.random.seed(42)
@@ -223,11 +225,31 @@ def parse_opt():
         default=None,
         choices=['SGD', 'AdamW']
     )
+    parser.add_argument(
+        '--local_rank',
+        default=-1,
+        type=int,
+        help='local rank for DistributedDataParallel (set automatically by torchrun)'
+    )
 
     args = vars(parser.parse_args())
     return args
 
 def main(args):
+    # Jika torchrun / distributed, set device per-process
+    # Jika user mengeksekusi dengan torchrun, env LOCAL_RANK sudah tersedia.
+    if WORLD_SIZE > 1:
+        args['distributed'] = True
+        # prefer env LOCAL_RANK jika ada, kalau tidak gunakan arg
+        local_rank = LOCAL_RANK if LOCAL_RANK != -1 else args.get('local_rank', -1)
+        if local_rank != -1:
+            # set default device ke GPU yang sesuai
+            args['gpu'] = int(local_rank)
+            args['device'] = f'cuda:{local_rank}'
+            torch.cuda.set_device(args['gpu'])
+    else:
+        args['distributed'] = False
+        
     # Initialize distributed mode.
     utils.init_distributed_mode(args)
 
