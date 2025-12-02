@@ -88,46 +88,36 @@ def show_tranformed_image(train_loader, device, classes, colors):
             images, targets = next(iter(train_loader))
             images = list(image.to(device) for image in images)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+
             boxes = targets[i]['boxes'].cpu().numpy().astype(np.int32)
             labels = targets[i]['labels'].cpu().numpy().astype(np.int32)
-            # Get all the predicited class names.
-            pred_classes = [classes[i] for i in targets[i]['labels'].cpu().numpy()]
+            pred_classes = [classes[i] for i in labels]
+
             sample = images[i].permute(1, 2, 0).cpu().numpy()
             sample = cv2.cvtColor(sample, cv2.COLOR_RGB2BGR)
 
-            lw = max(round(sum(sample.shape) / 2 * 0.003), 2)  # Line width.
-            tf = max(lw - 1, 1) # Font thickness.
-
             for box_num, box in enumerate(boxes):
-                p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
                 class_name = pred_classes[box_num]
-                color = colors[classes.index(class_name)]
-                cv2.rectangle(
-                    sample,
-                    p1,
-                    p2,
-                    color, 
-                    2,
-                    cv2.LINE_AA
-                )
-                w, h = cv2.getTextSize(
-                    class_name, 
-                    0, 
-                    fontScale=lw / 3, 
-                    thickness=tf
-                )[0]  # text width, height
-                outside = p1[1] - h >= 3
-                p2 = p1[0] + w, p1[1] - h - 3 if outside else p1[1] + h + 3
-                cv2.putText(
-                    sample, 
-                    class_name,
-                    (p1[0], p1[1] - 5 if outside else p1[1] + h + 2),
-                    cv2.FONT_HERSHEY_SIMPLEX, 
-                    0.8, 
-                    color, 
-                    2, 
-                    cv2.LINE_AA
-                )
+                color = colors[classes.index(class_name)] * 255
+                color = tuple(map(int, color))
+
+                bg_color = LABEL_BG[class_name]
+                text_color = LABEL_TEXT_COLOR
+
+                cv2.rectangle(sample, (box[0], box[1]), (box[2], box[3]), color, 2)
+
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                (w, h), _ = cv2.getTextSize(class_name, font, 0.6, 2)
+
+                cv2.rectangle(sample,
+                              (box[0], box[1] - h - 6),
+                              (box[0] + w + 6, box[1]),
+                              bg_color, -1)
+
+                cv2.putText(sample, class_name,
+                            (box[0] + 3, box[1] - 3),
+                            font, 0.6, text_color, 2, cv2.LINE_AA)
+
             cv2.imshow('Transformed image', sample)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
@@ -261,38 +251,63 @@ def save_validation_results(images, detections, counter, out_dir, classes, color
     :param detections: All the detection results.
     :param counter: Step counter for saving with unique ID.
     """
-    IMG_MEAN = [0.485, 0.456, 0.406]
-    IMG_STD = [0.229, 0.224, 0.225]
-    image_list = [] # List to store predicted images to return.
+    image_list = []
+
     for i, detection in enumerate(detections):
         image_c = images[i].clone()
         image_c = image_c.detach().cpu().numpy().astype(np.float32)
         image = np.transpose(image_c, (1, 2, 0))
-
         image = np.ascontiguousarray(image, dtype=np.float32)
-
-        scores = detection['scores'].cpu().numpy()
-        labels = detection['labels']
-        bboxes = detection['boxes'].detach().cpu().numpy()
-        boxes = bboxes[scores >= 0.5].astype(np.int32)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        # Get all the predicited class names.
-        pred_classes = [classes[i] for i in labels.cpu().numpy()]
+
+        scores = detection["scores"].cpu().numpy()
+        labels = detection["labels"].cpu().numpy()
+        bboxes = detection["boxes"].detach().cpu().numpy()
+
+        # Threshold
+        keep = scores >= 0.5
+        boxes = bboxes[keep].astype(np.int32)
+        keep_labels = labels[keep]
+
         for j, box in enumerate(boxes):
-            class_name = pred_classes[j]
-            color = colors[classes.index(class_name)]
-            cv2.rectangle(
-                image, 
-                (int(box[0]), int(box[1])),
-                (int(box[2]), int(box[3])),
-                color, 2, lineType=cv2.LINE_AA
-            )
-            cv2.putText(image, class_name, 
-                    (int(box[0]), int(box[1]-5)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 
-                    2, lineType=cv2.LINE_AA)
-        cv2.imwrite(f"{out_dir}/image_{i}_{counter}.jpg", image*255.)
-        image_list.append(image[:, :, ::-1])
+            class_name = classes[keep_labels[j]]
+            color = colors[classes.index(class_name)] * 255
+            color = tuple(map(int, color))
+
+            bg_color = LABEL_BG[class_name]
+            text_color = LABEL_TEXT_COLOR
+
+            # Draw rectangle
+            cv2.rectangle(image, 
+                          (box[0], box[1]), 
+                          (box[2], box[3]), 
+                          color, 2)
+
+            # Prepare label
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.6
+            font_thick = 2
+
+            (w, h), _ = cv2.getTextSize(class_name, font, font_scale, font_thick)
+
+            # Background rectangle
+            cv2.rectangle(image,
+                          (box[0], box[1] - h - 6),
+                          (box[0] + w + 6, box[1]),
+                          bg_color, -1)
+
+            # Put text
+            cv2.putText(image,
+                        class_name,
+                        (box[0] + 3, box[1] - 3),
+                        font, font_scale, text_color,
+                        font_thick, cv2.LINE_AA)
+
+        save_path = f"{out_dir}/image_{i}_{counter}.jpg"
+        cv2.imwrite(save_path, image)
+
+        image_list.append(image[:, :, ::-1])  # Convert BGR→RGB for logging
+
     return image_list
 
 def set_infer_dir():
