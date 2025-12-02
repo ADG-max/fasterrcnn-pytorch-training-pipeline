@@ -29,7 +29,7 @@ def get_train_aug():
             p=0.3
         ),
         A.OneOf([
-            A.MotionBlur(blur_limit=4, p=0.4),
+            A.MotionBlur(blur_limit=3, p=0.4),
             A.GaussianBlur(blur_limit=(3,5), p=0.3),
         ], p=0.5),
         A.RandomBrightnessContrast(brightness_limit=0.15, contrast_limit=0.15, p=0.3),
