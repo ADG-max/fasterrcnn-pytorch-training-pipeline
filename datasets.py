@@ -8,7 +8,6 @@ import random
 from xml.etree import ElementTree as et
 from torch.utils.data import Dataset, DataLoader
 from utils.transforms import (
-    apply_small_object_aug,
     get_train_transform, 
     get_valid_transform,
     get_train_aug,
