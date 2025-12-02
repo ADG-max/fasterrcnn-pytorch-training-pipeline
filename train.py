@@ -264,7 +264,11 @@ def main(args):
     BATCH_SIZE = args['batch']
     VISUALIZE_TRANSFORMED_IMAGES = args['vis_transformed']
     OUT_DIR = set_training_dir(args['name'], args['project_dir'])
-    COLORS = np.random.uniform(0, 1, size=(len(CLASSES), 3))
+    COLORS = np.array([
+        [1.0, 0.0, 0.0],   # Fire = merah terang
+        [0.0, 1.0, 1.0],   # Smoke = cyan terang
+        [1.0, 1.0, 0.0],   # Other = kuning terang
+    ])
     SCALER = torch.amp.GradScaler("cuda") if args['amp'] else None
     # Set logging file.
     set_log(OUT_DIR)
