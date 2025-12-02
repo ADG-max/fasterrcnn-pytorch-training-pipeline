@@ -10,14 +10,6 @@ from torch_utils.coco_utils import get_coco_api_from_dataset
 from utils.general import save_validation_results
 import numpy as np
 
-LABEL_BG = {
-    "Fire":   (120, 0, 0),     # Fire = merah gelap
-    "Smoke":  (0, 120, 120),   # Smoke = cyan gelap
-    "Other":  (120, 120, 0),   # Other = kuning gelap
-}
-
-LABEL_TEXT_COLOR = (255, 255, 255)  # putih
-
 def train_one_epoch(
     model, 
     optimizer, 
