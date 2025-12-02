@@ -113,8 +113,10 @@ def show_tranformed_image(train_loader, device, classes, colors):
                 class_name = classes[cls_id]
 
                 # Get colors
-                color = (colors[cls_id] * 255).astype(int)
-                color = tuple(color)
+                color = colors[cls_id]
+                color = np.array(color).reshape(-1)[:3]      
+                color = (color * 255).astype(np.uint8)       
+                color = tuple(int(c) for c in color.tolist())  
 
                 bg_color = LABEL_BG.get(class_name, (0, 0, 0))
                 text_color = LABEL_TEXT_COLOR
@@ -313,8 +315,10 @@ def save_validation_results(images, detections, counter, out_dir, classes, color
             class_name = classes[cls_id]
 
             # Box color
-            color = (colors[cls_id] * 255).astype(int)
-            color = tuple(color)
+            color = colors[cls_id]
+            color = np.array(color).reshape(-1)[:3]      
+            color = (color * 255).astype(np.uint8)       
+            color = tuple(int(c) for c in color.tolist()) 
 
             # Label background & text color
             bg_color = LABEL_BG.get(class_name, (0, 0, 0))
