@@ -118,6 +118,14 @@ if __name__ == '__main__':
     if args['weights'] is not None:
         model = create_model(num_classes=NUM_CLASSES, coco_model=False)
         checkpoint = torch.load(args['weights'], map_location=DEVICE)
+        state_dict = checkpoint['model_state_dict']
+        new_state_dict = {}
+        
+        for k, v in state_dict.items():
+            new_key = k.replace("module.", "")  # remove DP prefix
+            new_state_dict[new_key] = v
+        
+        checkpoint['model_state_dict'] = new_state_dict
         model.load_state_dict(checkpoint['model_state_dict'])
         valid_dataset = create_valid_dataset(
             VALID_DIR_IMAGES, 
