@@ -99,8 +99,6 @@ def get_train_aug():
             translate_percent={"x": 0.03, "y": 0.03},
             scale=(0.95, 1.05),
             rotate=(-3, 3),
-            fit_output=False,
-            interpolation=cv2.INTER_LINEAR,
             p=0.25
         ),
         A.OneOf([
