@@ -633,6 +633,10 @@ def main(args):
     if not args['disable_wandb']:
         wandb_save_model(OUT_DIR)
 
+    # Shutdown DDP properly
+    if args['distributed']:
+        torch.distributed.destroy_process_group()
+
 
 if __name__ == '__main__':
     args = parse_opt()
