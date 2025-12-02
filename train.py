@@ -231,6 +231,15 @@ def main(args):
     # Initialize distributed mode.
     utils.init_distributed_mode(args)
 
+    # ==============================
+    # DDP: Prevent folder creation race-condition
+    # ==============================
+    if RANK != 0:
+        torch.distributed.barrier()
+    else:
+        os.makedirs('outputs/training', exist_ok=True)
+        torch.distributed.barrier()
+
     # Initialize W&B with project name.
     if not args['disable_wandb']:
         wandb_init(name=args['name'])
