@@ -451,6 +451,11 @@ class CustomDataset(Dataset):
         labels = labels.cpu().numpy().tolist()  # Convert tensor to list
         bboxes = target['boxes'].cpu().numpy().tolist()
 
+        # Tambahkan augmentasi khusus objek kecil
+        image_resized, bboxes, labels = apply_small_object_aug(
+            image_resized, bboxes, labels
+        )
+
         if self.use_train_aug: # Use train augmentation if argument is passed.
             train_aug = get_train_aug()
             sample = train_aug(image=image_resized,
