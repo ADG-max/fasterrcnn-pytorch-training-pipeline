@@ -69,12 +69,6 @@ def get_train_aug():
             gamma_limit=(85, 120),
             p=0.25
         ),
-        # Texture enhancer untuk class "other"
-        A.CLAHE(
-            clip_limit=2.0,
-            tile_grid_size=(8, 8),
-            p=0.10
-        ),
         ToTensorV2(p=1.0),
     ], bbox_params=A.BboxParams(
         format='pascal_voc',
