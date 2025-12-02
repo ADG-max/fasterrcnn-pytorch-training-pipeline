@@ -438,18 +438,6 @@ class CustomDataset(Dataset):
                     labels, area, iscrowd, dims = self.load_image_and_labels(
                     index=idx
                 )
-
-            image_resized_np = (image_resized * 255).astype(np.uint8)
-            boxes_list = boxes.cpu().numpy().tolist()
-            labels_list = labels.cpu().numpy().tolist()
-        
-            image_resized_np, boxes_list, labels_list = apply_small_object_aug(
-                image_resized_np, boxes_list, labels_list
-            )
-        
-            image_resized = image_resized_np.astype(np.float32) / 255.0
-            boxes = torch.tensor(boxes_list, dtype=torch.float32)
-            labels = torch.tensor(labels_list, dtype=torch.int64)
         
         # Prepare the final `target` dictionary.
         target = {}
@@ -467,16 +455,16 @@ class CustomDataset(Dataset):
         if self.use_train_aug: # Use train augmentation if argument is passed.
             train_aug = get_train_aug()
             sample = train_aug(image=image_resized,
-                                     bboxes=bboxes,
+                                     bboxes=target['boxes'],
                                      labels=labels)
             image_resized = sample['image']
-            target['boxes'] = torch.tensor(sample['bboxes'], dtype=torch.float32)
+            target['boxes'] = torch.Tensor(sample['bboxes']).to(torch.int64)
         else:
             sample = self.transforms(image=image_resized,
-                                     bboxes=bboxes,
+                                     bboxes=target['boxes'],
                                      labels=labels)
             image_resized = sample['image']
-            target['boxes'] = torch.tensor(sample['bboxes'], dtype=torch.float32)
+            target['boxes'] = torch.Tensor(sample['bboxes']).to(torch.int64)
 
         # Fix to enable training without target bounding boxes,
         # see https://discuss.pytorch.org/t/fasterrcnn-images-with-no-objects-present-cause-an-error/117974/4
