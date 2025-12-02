@@ -265,6 +265,7 @@ def main(args):
     VISUALIZE_TRANSFORMED_IMAGES = args['vis_transformed']
     OUT_DIR = set_training_dir(args['name'], args['project_dir'])
     COLORS = np.array([
+        [0.0, 0.0, 0.0],   # Background
         [1.0, 0.0, 0.0],   # Fire = merah terang
         [0.0, 1.0, 1.0],   # Smoke = cyan terang
         [1.0, 1.0, 0.0],   # Other = kuning terang
