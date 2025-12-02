@@ -459,13 +459,13 @@ class CustomDataset(Dataset):
         if self.use_train_aug: # Use train augmentation if argument is passed.
             train_aug = get_train_aug()
             sample = train_aug(image=image_resized,
-                                     bboxes=target['boxes'],
+                                     bboxes=bboxes,
                                      labels=labels)
             image_resized = sample['image']
             target['boxes'] = torch.Tensor(sample['bboxes']).to(torch.int64)
         else:
             sample = self.transforms(image=image_resized,
-                                     bboxes=target['boxes'],
+                                     bboxes=bboxes,
                                      labels=labels)
             image_resized = sample['image']
             target['boxes'] = torch.Tensor(sample['bboxes']).to(torch.int64)
