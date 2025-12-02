@@ -92,41 +92,63 @@ def show_tranformed_image(train_loader, device, classes, colors):
     labels are correct or not.
     """
     if len(train_loader) > 0:
-        for i in range(2):
+        for _ in range(2):
             images, targets = next(iter(train_loader))
-            images = list(image.to(device) for image in images)
+            images = [img.to(device) for img in images]
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-            boxes = targets[i]['boxes'].cpu().numpy().astype(np.int32)
-            labels = targets[i]['labels'].cpu().numpy().astype(np.int32)
-            pred_classes = [classes[i] for i in labels]
+            boxes = targets[0]['boxes'].cpu().numpy().astype(np.int32)
+            labels = targets[0]['labels'].cpu().numpy().astype(np.int32)
 
-            sample = images[i].permute(1, 2, 0).cpu().numpy()
+            sample = images[0].permute(1, 2, 0).cpu().numpy()
             sample = cv2.cvtColor(sample, cv2.COLOR_RGB2BGR)
 
             for box_num, box in enumerate(boxes):
-                class_name = pred_classes[box_num]
-                color = colors[classes.index(class_name)] * 255
-                color = tuple(map(int, color))
+                cls_id = labels[box_num]
 
-                bg_color = LABEL_BG[class_name]
+                # Skip background
+                if cls_id == 0:
+                    continue
+
+                class_name = classes[cls_id]
+
+                # Get colors
+                color = (colors[cls_id] * 255).astype(int)
+                color = tuple(color)
+
+                bg_color = LABEL_BG.get(class_name, (0, 0, 0))
                 text_color = LABEL_TEXT_COLOR
 
+                # Draw bbox
                 cv2.rectangle(sample, (box[0], box[1]), (box[2], box[3]), color, 2)
 
+                # Draw label
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                (w, h), _ = cv2.getTextSize(class_name, font, 0.6, 2)
+                font_scale = 0.6
+                font_thick = 2
 
-                cv2.rectangle(sample,
-                              (box[0], box[1] - h - 6),
-                              (box[0] + w + 6, box[1]),
-                              bg_color, -1)
+                (w, h), _ = cv2.getTextSize(class_name, font, font_scale, font_thick)
 
-                cv2.putText(sample, class_name,
-                            (box[0] + 3, box[1] - 3),
-                            font, 0.6, text_color, 2, cv2.LINE_AA)
+                cv2.rectangle(
+                    sample,
+                    (box[0], box[1] - h - 6),
+                    (box[0] + w + 6, box[1]),
+                    bg_color,
+                    -1
+                )
 
-            cv2.imshow('Transformed image', sample)
+                cv2.putText(
+                    sample,
+                    class_name,
+                    (box[0] + 3, box[1] - 3),
+                    font,
+                    font_scale,
+                    text_color,
+                    font_thick,
+                    cv2.LINE_AA
+                )
+
+            cv2.imshow("Transformed image", sample)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
@@ -272,49 +294,65 @@ def save_validation_results(images, detections, counter, out_dir, classes, color
         labels = detection["labels"].cpu().numpy()
         bboxes = detection["boxes"].detach().cpu().numpy()
 
-        # Threshold
+        # Confidence threshold
         keep = scores >= 0.5
         boxes = bboxes[keep].astype(np.int32)
         keep_labels = labels[keep]
 
         for j, box in enumerate(boxes):
-            class_name = classes[keep_labels[j]]
-            color = colors[classes.index(class_name)] * 255
-            color = tuple(map(int, color))
+            cls_id = keep_labels[j]
 
-            bg_color = LABEL_BG[class_name]
+            # Skip background (0)
+            if cls_id == 0:
+                continue
+
+            # Defensive check
+            if cls_id >= len(colors):
+                cls_id = 0
+
+            class_name = classes[cls_id]
+
+            # Box color
+            color = (colors[cls_id] * 255).astype(int)
+            color = tuple(color)
+
+            # Label background & text color
+            bg_color = LABEL_BG.get(class_name, (0, 0, 0))
             text_color = LABEL_TEXT_COLOR
 
-            # Draw rectangle
-            cv2.rectangle(image, 
-                          (box[0], box[1]), 
-                          (box[2], box[3]), 
-                          color, 2)
+            # Draw box
+            cv2.rectangle(image, (box[0], box[1]), (box[2], box[3]), color, 2)
 
-            # Prepare label
+            # Draw label
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 0.6
             font_thick = 2
 
             (w, h), _ = cv2.getTextSize(class_name, font, font_scale, font_thick)
 
-            # Background rectangle
-            cv2.rectangle(image,
-                          (box[0], box[1] - h - 6),
-                          (box[0] + w + 6, box[1]),
-                          bg_color, -1)
+            cv2.rectangle(
+                image,
+                (box[0], box[1] - h - 6),
+                (box[0] + w + 6, box[1]),
+                bg_color,
+                -1
+            )
 
-            # Put text
-            cv2.putText(image,
-                        class_name,
-                        (box[0] + 3, box[1] - 3),
-                        font, font_scale, text_color,
-                        font_thick, cv2.LINE_AA)
+            cv2.putText(
+                image,
+                class_name,
+                (box[0] + 3, box[1] - 3),
+                font,
+                font_scale,
+                text_color,
+                font_thick,
+                cv2.LINE_AA
+            )
 
         save_path = f"{out_dir}/image_{i}_{counter}.jpg"
         cv2.imwrite(save_path, image)
 
-        image_list.append(image[:, :, ::-1])  # Convert BGR→RGB for logging
+        image_list.append(image[:, :, ::-1])  # BGR → RGB
 
     return image_list
 
