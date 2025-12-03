@@ -354,7 +354,8 @@ def save_validation_results(images, detections, counter, out_dir, classes, color
             )
 
         save_path = f"{out_dir}/image_{i}_{counter}.jpg"
-        cv2.imwrite(save_path, image)
+        image_to_save = (image * 255).astype(np.uint8)
+        cv2.imwrite(save_path, image_to_save)
 
         image_list.append(image[:, :, ::-1])  # BGR → RGB
 
