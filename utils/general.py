@@ -288,7 +288,7 @@ def save_validation_results(images, detections, counter, out_dir, classes, color
         image_c = images[i].clone()
         image_c = image_c.detach().cpu().numpy().astype(np.float32)
         image = np.transpose(image_c, (1, 2, 0))
-        image = np.ascontiguousarray(image, dtype=np.float32)
+        image = (image * 255).astype(np.uint8)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
         scores = detection["scores"].cpu().numpy()
