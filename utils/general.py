@@ -113,12 +113,11 @@ def show_tranformed_image(train_loader, device, classes, colors):
                 class_name = classes[cls_id]
 
                 # Get colors
-                color = colors[cls_id]
-                color = np.array(color).reshape(-1)[:3]      
-                color = (color * 255).astype(np.uint8)       
-                color = tuple(int(c) for c in color.tolist())  
+                rgb = (colors[cls_id] * 255).astype(np.uint8)
+                color = (int(rgb[2]), int(rgb[1]), int(rgb[0]))  # RGB → BGR
 
-                bg_color = LABEL_BG.get(class_name, (0, 0, 0))
+                bg_color = LABEL_BG.get(class_name, (0,0,0))
+                bg_color = (bg_color[2], bg_color[1], bg_color[0])   # RGB → BGR
                 text_color = LABEL_TEXT_COLOR
 
                 # Draw bbox
@@ -315,13 +314,12 @@ def save_validation_results(images, detections, counter, out_dir, classes, color
             class_name = classes[cls_id]
 
             # Box color
-            color = colors[cls_id]
-            color = np.array(color).reshape(-1)[:3]      
-            color = (color * 255).astype(np.uint8)       
-            color = tuple(int(c) for c in color.tolist()) 
+            rgb = (colors[cls_id] * 255).astype(np.uint8)
+            color = (int(rgb[2]), int(rgb[1]), int(rgb[0]))  # RGB → BGR
 
             # Label background & text color
-            bg_color = LABEL_BG.get(class_name, (0, 0, 0))
+            bg_color = LABEL_BG.get(class_name, (0,0,0))
+            bg_color = (bg_color[2], bg_color[1], bg_color[0])   # RGB → BGR
             text_color = LABEL_TEXT_COLOR
 
             # Draw box
@@ -354,7 +352,7 @@ def save_validation_results(images, detections, counter, out_dir, classes, color
             )
 
         save_path = f"{out_dir}/image_{i}_{counter}.jpg"
-        image_to_save = (image * 255).astype(np.uint8)
+        image_to_save = image.astype(np.uint8)
         cv2.imwrite(save_path, image_to_save)
 
         image_list.append(image[:, :, ::-1])  # BGR → RGB
