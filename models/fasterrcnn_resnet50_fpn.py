@@ -1,7 +1,6 @@
 import torchvision
 
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-from torchvision.models.detection.anchor_utils import AnchorGenerator
 
 def create_model(num_classes, pretrained=True, coco_model=False):
     # Load Faster RCNN pre-trained model
