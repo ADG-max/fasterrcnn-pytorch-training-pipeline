@@ -19,30 +19,25 @@ def resize(im, img_size=640, square=False):
 # Define the training tranforms
 def get_train_aug():
     return A.Compose([
-        # FLIP sangat aman dan menaikkan mAP untuk semua ukuran
         A.HorizontalFlip(p=0.5),
-        # --- SCALE / CROP untuk small object ---
         A.ShiftScaleRotate(
             shift_limit=0.03,
-            scale_limit=0.10,      # overscale membantu small
+            scale_limit=0.10,      
             rotate_limit=5,
             border_mode=cv2.BORDER_REFLECT_101,
             p=0.35
         ),
-        # Small object enhancer (tanpa merusak bbox)
         A.RandomResizedCrop(
             height=640, width=640,
-            scale=(0.85, 1.0),     # crop ringan → bantu small
+            scale=(0.85, 1.0),     
             ratio=(0.9, 1.1),
             p=0.25
         ),
-        # --- BLUR / SHARP untuk medium-large ---
         A.OneOf([
             A.MotionBlur(blur_limit=3, p=0.4),
             A.GaussianBlur(blur_limit=(3, 5), p=0.4),
             A.MedianBlur(blur_limit=3, p=0.2),
         ], p=0.45),
-        # --- KONDISI API & ASAP ---
         A.OneOf([
             A.RandomBrightnessContrast(
                 brightness_limit=0.20,
@@ -57,14 +52,12 @@ def get_train_aug():
                 p=0.4
             ),
         ], p=0.5),
-        # Fog/Haze meningkatkan kemampuan mendeteksi smoke
         A.RandomFog(
             alpha_coef=0.04,
             fog_coef_lower=0.1,
             fog_coef_upper=0.3,
             p=0.20
         ),
-        # --- GAMMA untuk objek besar (api lebih terlihat) ---
         A.RandomGamma(
             gamma_limit=(85, 120),
             p=0.25
