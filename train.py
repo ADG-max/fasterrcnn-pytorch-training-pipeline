@@ -307,17 +307,25 @@ def main(args):
             valid_dataset, shuffle=False
         )
     else:
-        # hitung weight kelas
-        labels = train_dataset.image_labels
-        labels = [l for l in labels if l >= 0]  # remove empty labels
-        class_counts = np.bincount(labels)
-        class_counts[class_counts == 0] = 1
+        # Ambil label per image
+        labels = np.array(train_dataset.image_labels)
+    
+        # Buang -1 (gambar tanpa bbox)
+        valid_idx = labels != -1
+        filtered_labels = labels[valid_idx]
+    
+        # Hitung jumlah kelas
+        class_counts = np.bincount(filtered_labels)
+        class_counts[class_counts == 0] = 1  # hindari div by zero
+    
+        # Bobot = 1 / frekuensi kelas
         class_weights = 1.0 / class_counts
-        sample_weights = [class_weights[l] for l in labels]
-        
+        sample_weights = class_weights[filtered_labels]
+    
+        # Sampler
         train_sampler = WeightedRandomSampler(
             weights=sample_weights,
-            num_samples=len(sample_weights),
+            num_samples=len(filtered_labels),
             replacement=True
         )
 
