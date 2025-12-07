@@ -88,8 +88,11 @@ def train_one_epoch(
         batch_loss_rpn_list.append(loss_dict_reduced['loss_rpn_box_reg'].detach().cpu())
         train_loss_hist.send(loss_value)
 
-        if scheduler is not None:
-            scheduler.step(epoch + (step_counter/len(data_loader)))
+    if scheduler is not None and "warmup" in scheduler:
+        if epoch < scheduler["warmup_epochs"]:
+            scheduler["warmup"].step()
+        else:
+            scheduler["cosine"].step(epoch - scheduler["warmup_epochs"])
 
     return (
         metric_logger, 
