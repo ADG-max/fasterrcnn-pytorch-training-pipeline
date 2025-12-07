@@ -33,40 +33,19 @@ def get_train_aug():
             ratio=(0.9, 1.1),
             p=0.25
         ),
-        A.OneOf([
-            A.MotionBlur(blur_limit=3, p=0.4),
-            A.GaussianBlur(blur_limit=(3, 5), p=0.4),
-            A.MedianBlur(blur_limit=3, p=0.2),
-        ], p=0.45),
-        A.OneOf([
-            A.RandomBrightnessContrast(
-                brightness_limit=0.20,
-                contrast_limit=0.25,
-                p=0.6
-            ),
-            A.ColorJitter(
-                brightness=0.15,
-                contrast=0.15,
-                saturation=0.10,
-                hue=0.015,
-                p=0.4
-            ),
-        ], p=0.5),
-        A.RandomFog(
-            alpha_coef=0.04,
-            fog_coef_lower=0.1,
-            fog_coef_upper=0.3,
-            p=0.20
+        A.MotionBlur(blur_limit=3, p=0.5),
+        A.Blur(blur_limit=3, p=0.5),
+        A.RandomBrightnessContrast(
+            brightness_limit=0.2, p=0.5
         ),
-        A.RandomGamma(
-            gamma_limit=(85, 120),
-            p=0.25
-        ),
+        A.ColorJitter(p=0.5),
+        A.RandomGamma(p=0.2),
+        A.RandomFog(p=0.2),
         ToTensorV2(p=1.0),
     ], bbox_params=A.BboxParams(
         format='pascal_voc',
         label_fields=['labels'],
-        min_visibility=0.20
+        min_visibility=0.10
     ))
 
 
