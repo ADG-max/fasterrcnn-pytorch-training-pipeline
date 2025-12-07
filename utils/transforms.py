@@ -18,117 +18,12 @@ def resize(im, img_size=640, square=False):
             im = cv2.resize(im, (int(w0 * r), int(h0 * r)))
     return im
 
-class CopyPasteCustom(DualTransform):
-    def __init__(self, blend=True, sigma=1, pct_objects_paste=0.5,
-                 always_apply=False, p=0.5):
-        super(CopyPasteCustom, self).__init__(always_apply, p)
-        self.blend = blend
-        self.sigma = sigma
-        self.pct_objects_paste = pct_objects_paste
-
-    def apply(self, img, **params):
-        return img
-
-    def apply_to_bbox(self, bbox, **params):
-        return bbox
-
-    @property
-    def targets_as_params(self):
-        return ["image", "bboxes", "labels"]
-
-    def __call__(self, force_apply=False, **kwargs):
-        if not force_apply and random.random() > self.p:
-            return kwargs
-
-        image = kwargs["image"].copy()
-
-        # Convert to mutable list
-        bboxes = [list(map(float, bb[:4])) for bb in kwargs["bboxes"]]
-        labels = list(kwargs["labels"])
-
-        h, w = image.shape[:2]
-
-        if len(bboxes) == 0:
-            return kwargs
-
-        # how many to paste
-        n = max(1, int(len(bboxes) * self.pct_objects_paste))
-        idxs = random.sample(range(len(bboxes)), n)
-
-        for idx in idxs:
-            x1, y1, x2, y2 = map(int, bboxes[idx])
-
-            # skip invalid
-            if x2 <= x1 or y2 <= y1:
-                continue
-            if x1 < 0 or y1 < 0 or x2 > w or y2 > h:
-                continue
-
-            obj = image[y1:y2, x1:x2]
-            if obj.size == 0:
-                continue
-
-            oh, ow = obj.shape[:2]
-            if oh < 2 or ow < 2:
-                continue
-
-            # new random position
-            new_x = random.randint(0, w - ow)
-            new_y = random.randint(0, h - oh)
-            new_x2 = new_x + ow
-            new_y2 = new_y + oh
-
-            # blending
-            if self.blend:
-                mask = np.ones((oh, ow, 1), dtype=np.float32)
-                mask = cv2.GaussianBlur(mask, (0, 0), self.sigma)
-                image[new_y:new_y2, new_x:new_x2] = (
-                    obj * mask + image[new_y:new_y2, new_x:new_x2] * (1 - mask)
-                )
-            else:
-                image[new_y:new_y2, new_x:new_x2] = obj
-
-            # new bbox
-            bboxes.append([float(new_x), float(new_y), float(new_x2), float(new_y2)])
-            labels.append(labels[idx])
-
-        valid_bboxes = []
-        valid_labels = []
-
-        for bb, lb in zip(bboxes, labels):
-            if len(bb) != 4:
-                continue
-
-            x1, y1, x2, y2 = map(float, bb)
-
-            # discard if invalid
-            if x2 > x1 and y2 > y1:
-                # clamp to image bounds
-                x1 = max(0, min(x1, w - 1))
-                y1 = max(0, min(y1, h - 1))
-                x2 = max(1, min(x2, w))
-                y2 = max(1, min(y2, h))
-
-                valid_bboxes.append([x1, y1, x2, y2])
-                valid_labels.append(lb)
-
-        kwargs["image"] = image
-        kwargs["bboxes"] = valid_bboxes
-        kwargs["labels"] = valid_labels
-        return kwargs
-
 # Define the training tranforms
 def get_train_aug():
     return A.Compose([
         A.RandomSizedBBoxSafeCrop(
             height=512, width=512,
             p=0.30
-        ),
-        CopyPasteCustom(
-            blend=True,
-            sigma=1,
-            pct_objects_paste=0.5,
-            p=0.50
         ),
         A.HorizontalFlip(p=0.5),
         A.ShiftScaleRotate(
