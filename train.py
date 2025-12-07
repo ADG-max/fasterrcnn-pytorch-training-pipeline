@@ -227,6 +227,19 @@ def parse_opt():
     args = vars(parser.parse_args())
     return args
 
+class WarmupScheduler(torch.optim.lr_scheduler._LRScheduler):
+    def __init__(self, optimizer, warmup_epochs, warmup_factor=1e-3, last_epoch=-1):
+        self.warmup_epochs = warmup_epochs
+        self.warmup_factor = warmup_factor
+        super().__init__(optimizer, last_epoch)
+
+    def get_lr(self):
+        if self.last_epoch >= self.warmup_epochs:
+            return [base_lr for base_lr in self.base_lrs]
+        alpha = float(self.last_epoch) / float(max(1, self.warmup_epochs))
+        factor = self.warmup_factor + alpha * (1 - self.warmup_factor)
+        return [base_lr * factor for base_lr in self.base_lrs]
+
 def main(args):
     # Initialize distributed mode.
     utils.init_distributed_mode(args)
@@ -458,15 +471,26 @@ def main(args):
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
     if args['cosine_annealing']:
-        # LR will be zero as we approach `steps` number of epochs each time.
-        # If `steps = 5`, LR will slowly reduce to zero every 5 epochs.
-        steps = NUM_EPOCHS + 10
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-            optimizer, 
-            T_0=steps,
-            T_mult=1,
-            verbose=False
+        warmup_epochs = 3
+        steps = NUM_EPOCHS
+    
+        warmup_scheduler = WarmupScheduler(
+            optimizer,
+            warmup_epochs=warmup_epochs,
+            warmup_factor=0.001
         )
+    
+        cosine_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+            optimizer,
+            T_0=steps,
+            T_mult=1
+        )
+    
+        scheduler = {
+            "warmup": warmup_scheduler,
+            "cosine": cosine_scheduler,
+            "warmup_epochs": warmup_epochs
+        }
     else:
         scheduler = None
 
