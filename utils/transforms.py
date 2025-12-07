@@ -23,12 +23,15 @@ def get_train_aug():
             height=512, width=512,
             p=0.35
         ),
-        A.Cutout(
-            num_holes=6,
-            max_h_size=48,
-            max_w_size=48,
+        A.CoarseDropout(
+            max_holes=8,
+            max_height=64,
+            max_width=64,
+            min_holes=1,
+            min_height=32,
+            min_width=32,
             fill_value=0,
-            p=0.35
+            p=0.4
         ),
         A.CopyPaste(p=0.25),
         A.HorizontalFlip(p=0.5),
