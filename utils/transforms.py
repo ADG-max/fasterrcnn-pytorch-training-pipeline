@@ -1,3 +1,4 @@
+from copy_paste import CopyPaste
 import albumentations as A
 import numpy as np
 import cv2
