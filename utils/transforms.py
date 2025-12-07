@@ -1,3 +1,4 @@
+from copy_paste import CopyPaste
 import albumentations as A
 import numpy as np
 import cv2
@@ -33,7 +34,12 @@ def get_train_aug():
             fill_value=0,
             p=0.4
         ),
-        A.CopyPaste(p=0.25),
+        A.CopyPaste(
+            blend=True,
+            sigma=1,
+            pct_objects_paste=0.5,
+            p=0.5
+        ),
         A.HorizontalFlip(p=0.5),
         A.ShiftScaleRotate(
             shift_limit=0.03,
