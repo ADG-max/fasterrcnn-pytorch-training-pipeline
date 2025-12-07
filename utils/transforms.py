@@ -1,7 +1,9 @@
 import albumentations as A
 import numpy as np
 import cv2
+import random
 
+from albumentations.core.transforms_interface import DualTransform
 from albumentations.pytorch import ToTensorV2
 from torchvision import transforms as transforms
 
@@ -15,6 +17,76 @@ def resize(im, img_size=640, square=False):
         if r != 1:  # if sizes are not equal
             im = cv2.resize(im, (int(w0 * r), int(h0 * r)))
     return im
+
+class CopyPasteCustom(DualTransform):
+    def __init__(self, blend=True, sigma=1, pct_objects_paste=0.5, always_apply=False, p=0.5):
+        super(CopyPasteCustom, self).__init__(always_apply, p)
+        self.blend = blend
+        self.sigma = sigma
+        self.pct_objects_paste = pct_objects_paste
+
+    def apply(self, img, **params):
+        return img
+
+    def apply_to_bbox(self, bbox, **params):
+        return bbox
+
+    def get_params_dependent_on_targets(self, params):
+        return {}
+
+    @property
+    def targets_as_params(self):
+        return ["image", "bboxes", "labels"]
+
+    def update_params(self, params, **kwargs):
+        return params
+
+    def apply_with_params(self, params, **kwargs):
+        return kwargs["image"], kwargs["bboxes"], kwargs["labels"]
+
+    def __call__(self, force_apply=False, **kwargs):
+        if not force_apply and random.random() > self.p:
+            return kwargs
+
+        image = kwargs["image"].copy()
+        bboxes = kwargs["bboxes"].copy()
+        labels = kwargs["labels"].copy()
+
+        if len(bboxes) == 0:
+            return kwargs  # nothing to paste
+
+        # pilih subset objek
+        n = max(1, int(len(bboxes) * self.pct_objects_paste))
+        idxs = random.sample(range(len(bboxes)), n)
+
+        for idx in idxs:
+            x1, y1, x2, y2 = map(int, bboxes[idx])
+            obj = image[y1:y2, x1:x2].copy()
+
+            # posisi baru
+            h, w = image.shape[:2]
+            new_x = random.randint(0, w - (x2 - x1))
+            new_y = random.randint(0, h - (y2 - y1))
+            new_x2 = new_x + (x2 - x1)
+            new_y2 = new_y + (y2 - y1)
+
+            # blending
+            if self.blend:
+                mask = np.full(obj.shape[:2], 255, np.uint8)
+                mask = cv2.GaussianBlur(mask, (0, 0), self.sigma)
+                mask = mask[..., None] / 255.0
+                image[new_y:new_y2, new_x:new_x2] = \
+                    obj * mask + image[new_y:new_y2, new_x:new_x2] * (1 - mask)
+            else:
+                image[new_y:new_y2, new_x:new_x2] = obj
+
+            bboxes.append([new_x, new_y, new_x2, new_y2])
+            labels.append(labels[idx])
+
+        kwargs["image"] = image
+        kwargs["bboxes"] = bboxes
+        kwargs["labels"] = labels
+        return kwargs
 
 # Define the training tranforms
 def get_train_aug():
@@ -33,7 +105,7 @@ def get_train_aug():
             fill_value=0,
             p=0.25
         ),
-        A.CopyPaste(
+        CopyPasteCustom(
             blend=True,
             sigma=1,
             pct_objects_paste=0.5,
