@@ -38,12 +38,6 @@ class CopyPasteCustom(DualTransform):
     def targets_as_params(self):
         return ["image", "bboxes", "labels"]
 
-    def update_params(self, params, **kwargs):
-        return params
-
-    def apply_with_params(self, params, **kwargs):
-        return kwargs["image"], kwargs["bboxes"], kwargs["labels"]
-
     def __call__(self, force_apply=False, **kwargs):
         if not force_apply and random.random() > self.p:
             return kwargs
@@ -53,31 +47,47 @@ class CopyPasteCustom(DualTransform):
         labels = kwargs["labels"].copy()
 
         if len(bboxes) == 0:
-            return kwargs  # nothing to paste
+            return kwargs
 
-        # pilih subset objek
         n = max(1, int(len(bboxes) * self.pct_objects_paste))
         idxs = random.sample(range(len(bboxes)), n)
 
+        h, w = image.shape[:2]
+
         for idx in idxs:
-            bbox = bboxes[idx][:4]
-            x1, y1, x2, y2 = map(int, bbox)
+            x1, y1, x2, y2 = map(int, bboxes[idx][:4])
+
+            # VALIDATION FIX
+            if x2 <= x1 or y2 <= y1:
+                continue
+            if x1 < 0 or y1 < 0 or x2 > w or y2 > h:
+                continue
+
             obj = image[y1:y2, x1:x2].copy()
 
-            # posisi baru
-            h, w = image.shape[:2]
-            new_x = random.randint(0, w - (x2 - x1))
-            new_y = random.randint(0, h - (y2 - y1))
-            new_x2 = new_x + (x2 - x1)
-            new_y2 = new_y + (y2 - y1)
+            if obj.size == 0:
+                continue
 
-            # blending
+            oh, ow = obj.shape[:2]
+            if oh < 2 or ow < 2:
+                continue
+
+            new_x = random.randint(0, w - ow)
+            new_y = random.randint(0, h - oh)
+            new_x2 = new_x + ow
+            new_y2 = new_y + oh
+
             if self.blend:
-                mask = np.full(obj.shape[:2], 255, np.uint8)
+                mask = np.full((oh, ow), 255, np.uint8)
+                if mask.size == 0:
+                    continue
+
                 mask = cv2.GaussianBlur(mask, (0, 0), self.sigma)
                 mask = mask[..., None] / 255.0
-                image[new_y:new_y2, new_x:new_x2] = \
+
+                image[new_y:new_y2, new_x:new_x2] = (
                     obj * mask + image[new_y:new_y2, new_x:new_x2] * (1 - mask)
+                )
             else:
                 image[new_y:new_y2, new_x:new_x2] = obj
 
@@ -85,8 +95,9 @@ class CopyPasteCustom(DualTransform):
             labels.append(labels[idx])
 
         kwargs["image"] = image
-        kwargs["bboxes"] = [bb[:4] for bb in bboxes]
+        kwargs["bboxes"] = [list(bb[:4]) for bb in bboxes]
         kwargs["labels"] = labels
+
         return kwargs
 
 # Define the training tranforms
