@@ -22,60 +22,60 @@ def get_train_aug():
     return A.Compose([
         A.RandomSizedBBoxSafeCrop(
             height=512, width=512,
-            p=0.35
+            p=0.30
         ),
         A.CoarseDropout(
-            max_holes=8,
-            max_height=64,
-            max_width=64,
+            max_holes=6,
+            max_height=48,
+            max_width=48,
             min_holes=1,
-            min_height=32,
-            min_width=32,
+            min_height=24,
+            min_width=24,
             fill_value=0,
-            p=0.4
+            p=0.25
         ),
         A.CopyPaste(
             blend=True,
             sigma=1,
             pct_objects_paste=0.5,
-            p=0.5
+            p=0.50
         ),
         A.HorizontalFlip(p=0.5),
         A.ShiftScaleRotate(
             shift_limit=0.03,
-            scale_limit=0.12,
+            scale_limit=0.10,     
             rotate_limit=7,
             border_mode=cv2.BORDER_REFLECT_101,
             p=0.40
         ),
         A.RandomResizedCrop(
             height=640, width=640,
-            scale=(0.75, 1.0),
+            scale=(0.85, 1.0),
             ratio=(0.9, 1.1),
-            p=0.30
+            p=0.15
         ),
-        A.MotionBlur(blur_limit=3, p=0.25),
-        A.GaussianBlur(blur_limit=3, p=0.25),
+        A.MotionBlur(p=0.25),
+        A.GaussianBlur(p=0.25),
         A.RandomBrightnessContrast(
-            brightness_limit=0.25,
-            contrast_limit=0.25,
-            p=0.55
+            brightness_limit=0.20,
+            contrast_limit=0.20,
+            p=0.50
         ),
         A.ColorJitter(
             brightness=0.2,
             contrast=0.2,
             saturation=0.2,
             hue=0.02,
-            p=0.45
+            p=0.40
         ),
-        A.RandomFog(p=0.20),
+        A.RandomFog(p=0.10),
         A.RandomGamma(p=0.20),
         ToTensorV2(p=1.0),
     ], bbox_params=A.BboxParams(
         format='pascal_voc',
         label_fields=['labels'],
         min_visibility=0.10,
-        min_area=16  
+        min_area=16
     ))
 
 def get_train_transform():
