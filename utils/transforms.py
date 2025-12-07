@@ -19,35 +19,53 @@ def resize(im, img_size=640, square=False):
 # Define the training tranforms
 def get_train_aug():
     return A.Compose([
+        A.CopyPaste(
+            blend=True,          
+            sigma=1,             
+            pct_objects=0.3,     
+            p=0.35
+        ),
+        A.RandomCrop(
+            height=512, 
+            width=512,
+            p=0.30
+        ),
         A.HorizontalFlip(p=0.5),
         A.ShiftScaleRotate(
             shift_limit=0.03,
-            scale_limit=0.10,      
+            scale_limit=0.10,
             rotate_limit=5,
             border_mode=cv2.BORDER_REFLECT_101,
             p=0.35
         ),
         A.RandomResizedCrop(
             height=640, width=640,
-            scale=(0.85, 1.0),     
+            scale=(0.85, 1.0),
             ratio=(0.9, 1.1),
             p=0.25
         ),
-        A.MotionBlur(blur_limit=3, p=0.5),
-        A.Blur(blur_limit=3, p=0.5),
+        A.MotionBlur(blur_limit=3, p=0.3),
+        A.Blur(blur_limit=3, p=0.2),
         A.RandomBrightnessContrast(
-            brightness_limit=0.2, p=0.5
+            brightness_limit=0.2,
+            contrast_limit=0.2,
+            p=0.5
         ),
-        A.ColorJitter(p=0.5),
-        A.RandomGamma(p=0.2),
-        A.RandomFog(p=0.2),
+        A.ColorJitter(
+            brightness=0.15,
+            contrast=0.15,
+            saturation=0.15,
+            hue=0.02,
+            p=0.40
+        ),
+        A.RandomGamma(p=0.25),
+        A.RandomFog(p=0.15),
         ToTensorV2(p=1.0),
     ], bbox_params=A.BboxParams(
         format='pascal_voc',
         label_fields=['labels'],
         min_visibility=0.10
     ))
-
 
 def get_train_transform():
     return A.Compose([
