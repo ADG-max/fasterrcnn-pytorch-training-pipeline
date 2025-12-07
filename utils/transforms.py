@@ -19,7 +19,8 @@ def resize(im, img_size=640, square=False):
     return im
 
 class CopyPasteCustom(DualTransform):
-    def __init__(self, blend=True, sigma=1, pct_objects_paste=0.5, always_apply=False, p=0.5):
+    def __init__(self, blend=True, sigma=1, pct_objects_paste=0.5,
+                 always_apply=False, p=0.5):
         super(CopyPasteCustom, self).__init__(always_apply, p)
         self.blend = blend
         self.sigma = sigma
@@ -29,10 +30,8 @@ class CopyPasteCustom(DualTransform):
         return img
 
     def apply_to_bbox(self, bbox, **params):
+        # Albumentations expects bbox untouched here
         return bbox
-
-    def get_params_dependent_on_targets(self, params):
-        return {}
 
     @property
     def targets_as_params(self):
@@ -43,28 +42,30 @@ class CopyPasteCustom(DualTransform):
             return kwargs
 
         image = kwargs["image"].copy()
-        bboxes = kwargs["bboxes"].copy()
-        labels = kwargs["labels"].copy()
+
+        # Convert to mutable list
+        bboxes = [list(map(float, bb[:4])) for bb in kwargs["bboxes"]]
+        labels = list(kwargs["labels"])
+
+        h, w = image.shape[:2]
 
         if len(bboxes) == 0:
             return kwargs
 
+        # how many to paste
         n = max(1, int(len(bboxes) * self.pct_objects_paste))
         idxs = random.sample(range(len(bboxes)), n)
 
-        h, w = image.shape[:2]
-
         for idx in idxs:
-            x1, y1, x2, y2 = map(int, bboxes[idx][:4])
+            x1, y1, x2, y2 = map(int, bboxes[idx])
 
-            # VALIDATION FIX
+            # skip invalid bbox
             if x2 <= x1 or y2 <= y1:
                 continue
             if x1 < 0 or y1 < 0 or x2 > w or y2 > h:
                 continue
 
-            obj = image[y1:y2, x1:x2].copy()
-
+            obj = image[y1:y2, x1:x2]
             if obj.size == 0:
                 continue
 
@@ -72,30 +73,29 @@ class CopyPasteCustom(DualTransform):
             if oh < 2 or ow < 2:
                 continue
 
+            # new random location
             new_x = random.randint(0, w - ow)
             new_y = random.randint(0, h - oh)
             new_x2 = new_x + ow
             new_y2 = new_y + oh
 
+            # blending option
             if self.blend:
-                mask = np.full((oh, ow), 255, np.uint8)
-                if mask.size == 0:
-                    continue
-
+                mask = np.ones((oh, ow, 1), dtype=np.float32)
                 mask = cv2.GaussianBlur(mask, (0, 0), self.sigma)
-                mask = mask[..., None] / 255.0
-
                 image[new_y:new_y2, new_x:new_x2] = (
                     obj * mask + image[new_y:new_y2, new_x:new_x2] * (1 - mask)
                 )
             else:
                 image[new_y:new_y2, new_x:new_x2] = obj
 
-            bboxes.append([new_x, new_y, new_x2, new_y2])
+            # append new bbox
+            bboxes.append([float(new_x), float(new_y), float(new_x2), float(new_y2)])
             labels.append(labels[idx])
 
+        # ensure valid format
         kwargs["image"] = image
-        kwargs["bboxes"] = [list(bb[:4]) for bb in bboxes]
+        kwargs["bboxes"] = [bb[:4] for bb in bboxes]
         kwargs["labels"] = labels
 
         return kwargs
