@@ -107,16 +107,6 @@ def get_train_aug():
             height=512, width=512,
             p=0.30
         ),
-        A.CoarseDropout(
-            max_holes=6,
-            max_height=48,
-            max_width=48,
-            min_holes=1,
-            min_height=24,
-            min_width=24,
-            fill_value=0,
-            p=0.25
-        ),
         CopyPasteCustom(
             blend=True,
             sigma=1,
