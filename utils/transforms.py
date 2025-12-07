@@ -60,7 +60,8 @@ class CopyPasteCustom(DualTransform):
         idxs = random.sample(range(len(bboxes)), n)
 
         for idx in idxs:
-            x1, y1, x2, y2 = map(int, bboxes[idx])
+            bbox = bboxes[idx][:4]
+            x1, y1, x2, y2 = map(int, bbox)
             obj = image[y1:y2, x1:x2].copy()
 
             # posisi baru
@@ -84,7 +85,7 @@ class CopyPasteCustom(DualTransform):
             labels.append(labels[idx])
 
         kwargs["image"] = image
-        kwargs["bboxes"] = bboxes
+        kwargs["bboxes"] = [bb[:4] for bb in bboxes]
         kwargs["labels"] = labels
         return kwargs
 
