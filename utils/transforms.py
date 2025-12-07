@@ -19,12 +19,14 @@ def resize(im, img_size=640, square=False):
 # Define the training tranforms
 def get_train_aug():
     return A.Compose([
-        A.CopyPaste(
-            blend=True,          
-            sigma=1,             
-            pct_objects=0.3,     
-            p=0.35
+        A.Cutout(
+            num_holes=8,
+            max_h_size=64,
+            max_w_size=64,
+            fill_value=0,
+            p=0.4
         ),
+        A.MixUp(p=0.2),
         A.RandomCrop(
             height=512, 
             width=512,
