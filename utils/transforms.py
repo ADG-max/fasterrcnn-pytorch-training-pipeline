@@ -21,10 +21,6 @@ def resize(im, img_size=640, square=False):
 # Define the training tranforms
 def get_train_aug():
     return A.Compose([
-        A.RandomSizedBBoxSafeCrop(
-            height=512, width=512,
-            p=0.30
-        ),
         A.HorizontalFlip(p=0.5),
         A.ShiftScaleRotate(
             shift_limit=0.03,
