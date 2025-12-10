@@ -215,6 +215,26 @@ class CustomDataset(Dataset):
             boxes.append([xmin_final, ymin_final, xmax_final, ymax_final])
         # except:
         #     pass
+        # 🔍 Filter invalid bounding boxes (width/height <= 0)
+        valid_boxes = []
+        valid_labels = []
+        for box, label in zip(boxes, labels):
+            xmin, ymin, xmax, ymax = box
+            if xmax > xmin and ymax > ymin:
+                valid_boxes.append([xmin, ymin, xmax, ymax])
+                valid_labels.append(label)
+            else:
+                if self.train:
+                    print(f"⚠️ Invalid bbox found and removed in {image_name}: {box}")
+        
+        boxes = valid_boxes
+        labels = valid_labels
+        
+        # Pastikan tidak kosong
+        if len(boxes) == 0:
+            boxes = [[0, 0, 1, 1]]
+            labels = [self.classes.index('other')]  # fallback agar tidak crash
+
         # Bounding box to tensor.
         boxes_length = len(boxes)
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
@@ -290,6 +310,26 @@ class CustomDataset(Dataset):
             
             boxes.append([xmin_final, ymin_final, xmax_final, ymax_final])
 
+        # 🔍 Filter invalid bounding boxes (width/height <= 0)
+        valid_boxes = []
+        valid_labels = []
+        for box, label in zip(boxes, labels):
+            xmin, ymin, xmax, ymax = box
+            if xmax > xmin and ymax > ymin:
+                valid_boxes.append([xmin, ymin, xmax, ymax])
+                valid_labels.append(label)
+            else:
+                if self.train:
+                    print(f"⚠️ Invalid bbox found and removed in {image_name}: {box}")
+        
+        boxes = valid_boxes
+        labels = valid_labels
+        
+        # Pastikan tidak kosong
+        if len(boxes) == 0:
+            boxes = [[0, 0, 1, 1]]
+            labels = [self.classes.index('other')]  # fallback agar tidak crash
+        
         # Bounding box to tensor.
         boxes_length = len(boxes)
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
@@ -464,6 +504,19 @@ class CustomDataset(Dataset):
                                      labels=labels)
             image_resized = sample['image']
             target['boxes'] = torch.Tensor(sample['bboxes']).to(torch.int64)
+
+        # Filter bounding box invalid setelah augmentasi
+        boxes = target['boxes'].numpy()
+        valid_boxes = []
+        valid_labels = []
+        for box, label in zip(boxes, target['labels']):
+            xmin, ymin, xmax, ymax = box
+            if xmax > xmin and ymax > ymin:
+                valid_boxes.append([xmin, ymin, xmax, ymax])
+                valid_labels.append(label)
+    
+        target['boxes'] = torch.as_tensor(valid_boxes, dtype=torch.float32)
+        target['labels'] = torch.as_tensor(valid_labels, dtype=torch.int64)
 
         # Fix to enable training without target bounding boxes,
         # see https://discuss.pytorch.org/t/fasterrcnn-images-with-no-objects-present-cause-an-error/117974/4
