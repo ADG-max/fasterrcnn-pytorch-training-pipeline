@@ -379,18 +379,14 @@ def main(args):
             valid_dataset, shuffle=False
         )
     else:
-        # Ambil label per image
-        labels = np.array(train_dataset.image_labels)
-    
-        # Buang -1 (gambar tanpa bbox)
-        valid_idx = labels != -1
+        # Ambil label per bbox
+        labels = np.array(train_dataset.bbox_labels)
+        valid_idx = labels >= 0
         filtered_labels = labels[valid_idx]
     
         # Hitung jumlah kelas
         class_counts = np.bincount(filtered_labels)
-        class_counts[class_counts == 0] = 1  # hindari div by zero
-    
-        # Bobot = 1 / frekuensi kelas
+        class_counts[class_counts == 0] = 1
         class_weights = 1.0 / class_counts
         sample_weights = class_weights[filtered_labels]
     
@@ -404,7 +400,7 @@ def main(args):
         valid_sampler = SequentialSampler(valid_dataset)
 
     train_loader = create_train_loader(
-        train_dataset, BATCH_SIZE, NUM_WORKERS, batch_sampler=train_sampler
+        train_dataset, BATCH_SIZE, NUM_WORKERS, sampler=train_sampler
     )
     valid_loader = create_valid_loader(
         valid_dataset, BATCH_SIZE, NUM_WORKERS, batch_sampler=valid_sampler
