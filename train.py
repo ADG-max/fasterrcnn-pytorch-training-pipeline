@@ -400,7 +400,7 @@ def main(args):
         valid_sampler = SequentialSampler(valid_dataset)
 
     train_loader = create_train_loader(
-        train_dataset, BATCH_SIZE, NUM_WORKERS, sampler=train_sampler
+        train_dataset, BATCH_SIZE, NUM_WORKERS, batch_sampler=train_sampler
     )
     valid_loader = create_valid_loader(
         valid_dataset, BATCH_SIZE, NUM_WORKERS, batch_sampler=valid_sampler
