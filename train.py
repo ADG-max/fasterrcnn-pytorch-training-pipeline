@@ -260,6 +260,65 @@ def main(args):
     with open(args['data']) as file:
         data_configs = yaml.safe_load(file)
 
+    # Hitung distribusi jumlah sampel per kelas (VOC)
+    import xml.etree.ElementTree as ET
+    from collections import defaultdict
+    
+    def count_classes_from_voc(xml_dir, class_names):
+        counts = defaultdict(int)
+    
+        xml_files = [f for f in os.listdir(xml_dir) if f.endswith('.xml')]
+        print(f"\n📂 Total XML files di {xml_dir}: {len(xml_files)}")
+    
+        for xml_file in xml_files:
+            xml_path = os.path.join(xml_dir, xml_file)
+            tree = ET.parse(xml_path)
+            root = tree.getroot()
+    
+            for obj in root.findall("object"):
+                label = obj.find("name").text.strip()
+    
+                if label in class_names:
+                    counts[label] += 1
+                else:
+                    counts["__unknown__"] += 1
+    
+        return counts
+    
+    
+    # Ambil direktori dari YAML
+    train_xml_dir = data_configs['TRAIN_DIR_LABELS']
+    valid_xml_dir = data_configs['VALID_DIR_LABELS']
+    test_xml_dir  = data_configs['TEST_DIR_LABELS']
+    
+    # background tidak dihitung karena tidak ada di XML
+    VOC_CLASSES = [c for c in data_configs["CLASSES"] if c != "__background__"]
+    
+    print("\n==============================")
+    print("   HITUNG DISTRIBUSI KELAS   ")
+    print("==============================")
+    
+    train_counts = count_classes_from_voc(train_xml_dir, VOC_CLASSES)
+    valid_counts = count_classes_from_voc(valid_xml_dir, VOC_CLASSES)
+    test_counts  = count_classes_from_voc(test_xml_dir, VOC_CLASSES)
+    
+    print("\n=== DISTRIBUSI TRAIN ===")
+    print(train_counts)
+    print("\n=== DISTRIBUSI VALID ===")
+    print(valid_counts)
+    print("\n=== DISTRIBUSI TEST ===")
+    print(test_counts)
+    
+    # Total
+    total_counts = defaultdict(int)
+    for d in (train_counts, valid_counts, test_counts):
+        for k, v in d.items():
+            total_counts[k] += v
+    
+    print("\n=== TOTAL DISTRIBUSI ===")
+    print(total_counts)
+    print("=====================================\n")
+
     init_seeds(args['seed'] + 1 + RANK, deterministic=True)
     
     # Settings/parameters/constants.
