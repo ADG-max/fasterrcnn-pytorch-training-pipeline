@@ -61,11 +61,10 @@ class CustomDataset(Dataset):
             tree = et.parse(xml_path)
             root = tree.getroot()
         
-            labels = [self.classes.index(obj.find('name').text) for obj in root.findall('object')]
-        
-            # simpan semua bbox labels
-            for l in labels:
-                self.bbox_labels.append(l)
+            for obj in root.findall('object'):
+                name = obj.find('name').text.strip()
+                if name in self.classes:
+                    self.bbox_labels.append(self.classes.index(name))
 
         # Remove all annotations and images when no object is present.
         if self.label_type == 'pascal_voc':
@@ -169,19 +168,24 @@ class CustomDataset(Dataset):
         # try:
         tree = et.parse(annot_file_path)
         root = tree.getroot()
-        for member in root.findall('object'):
+        for obj in root.findall('object'):
+            name = obj.find('name').text.strip()
+        
+            # SKIP class yang TIDAK ADA di CLASSES (misalnya "other")
+            if name not in self.classes:
+                continue
             # Map the current object name to `classes` list to get
             # the label index and append to `labels` list.
-            labels.append(self.classes.index(member.find('name').text))
+            labels.append(self.classes.index(name))
             
             # xmin = left corner x-coordinates
-            xmin = float(member.find('bndbox').find('xmin').text)
+            xmin = float(bndbox.find('xmin').text)
             # xmax = right corner x-coordinates
-            xmax = float(member.find('bndbox').find('xmax').text)
+            xmax = float(bndbox.find('xmax').text)
             # ymin = left corner y-coordinates
-            ymin = float(member.find('bndbox').find('ymin').text)
+            ymin = float(bndbox.find('ymin').text)
             # ymax = right corner y-coordinates
-            ymax = float(member.find('bndbox').find('ymax').text)
+            ymax = float(bndbox.find('ymax').text)
 
             xmin, ymin, xmax, ymax = self.check_image_and_annotation(
                 xmin, 
@@ -230,10 +234,10 @@ class CustomDataset(Dataset):
         boxes = valid_boxes
         labels = valid_labels
         
-        # Pastikan tidak kosong
+        # Mendukung empty target
         if len(boxes) == 0:
-            boxes = [[0, 0, 1, 1]]
-            labels = [self.classes.index('other')]  # fallback agar tidak crash
+            boxes = torch.zeros((0, 4), dtype=torch.float32)
+            labels = torch.zeros((0,), dtype=torch.int64)
 
         # Bounding box to tensor.
         boxes_length = len(boxes)
@@ -325,10 +329,10 @@ class CustomDataset(Dataset):
         boxes = valid_boxes
         labels = valid_labels
         
-        # Pastikan tidak kosong
+        # Mendukung empty target
         if len(boxes) == 0:
-            boxes = [[0, 0, 1, 1]]
-            labels = [self.classes.index('other')]  # fallback agar tidak crash
+            boxes = torch.zeros((0, 4), dtype=torch.float32)
+            labels = torch.zeros((0,), dtype=torch.int64)
         
         # Bounding box to tensor.
         boxes_length = len(boxes)
