@@ -11,10 +11,9 @@ from pathlib import Path
 LABEL_BG = {
     "fire":   (120, 0, 0),     # Fire = merah gelap
     "smoke":  (0, 120, 120),   # Smoke = cyan gelap
-    "other":  (120, 120, 0),   # Other = kuning gelap
 }
 
-LABEL_TEXT_COLOR = (255, 255, 255)  # putih
+LABEL_TEXT_COLOR = (255, 255)  # putih
 
 plt.style.use('ggplot')
 
