@@ -340,7 +340,6 @@ def main(args):
         [0.0, 0.0, 0.0],   # Background
         [1.0, 0.0, 0.0],   # Fire = merah terang
         [0.0, 1.0, 1.0],   # Smoke = cyan terang
-        [1.0, 1.0, 0.0],   # Other = kuning terang
     ])
     SCALER = torch.amp.GradScaler("cuda") if args['amp'] else None
     # Set logging file.
