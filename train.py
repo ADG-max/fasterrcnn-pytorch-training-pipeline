@@ -50,7 +50,6 @@ from utils.logging import (
     wandb_init
 )
 from utils.visual_config import get_visual_config
-COLORS, LABEL_BG, LABEL_TEXT_COLOR = get_visual_config(CLASSES)
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -330,6 +329,7 @@ def main(args):
     VALID_DIR_LABELS = os.path.normpath(data_configs['VALID_DIR_LABELS'])
     CLASSES = data_configs['CLASSES']
     NUM_CLASSES = data_configs['NC']
+    COLORS, LABEL_BG, LABEL_TEXT_COLOR = get_visual_config(CLASSES)
     NUM_WORKERS = args['workers']
     DEVICE = torch.device(args['device'])
     print("device",DEVICE)
