@@ -50,7 +50,7 @@ from utils.logging import (
     wandb_init
 )
 from utils.visual_config import get_visual_config
-COLORS = get_visual_config(CLASSES)
+COLORS, LABEL_BG, LABEL_TEXT_COLOR = get_visual_config(CLASSES)
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
