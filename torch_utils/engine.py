@@ -125,7 +125,9 @@ def evaluate(
     save_valid_preds=False,
     out_dir=None,
     classes=None,
-    colors=None
+    colors=None,
+    label_bg=None,
+    label_text_color=None
 ):
     n_threads = torch.get_num_threads()
     # FIXME remove this and make paste_masks_in_image run on the GPU
@@ -168,7 +170,7 @@ def evaluate(
             # is returned here which is again returned at the end of the
             # function for WandB logging.
             val_saved_image = save_validation_results(
-                images, outputs, counter, out_dir, classes, colors, LABEL_BG, LABEL_TEXT_COLOR
+                images, outputs, counter, out_dir, classes, colors, label_bg, label_text_color
             )
         elif save_valid_preds == False and counter == 1:
             val_saved_image = np.ones((1, 64, 64, 3))
