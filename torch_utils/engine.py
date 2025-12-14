@@ -9,6 +9,7 @@ from torch_utils.coco_eval import CocoEvaluator
 from torch_utils.coco_utils import get_coco_api_from_dataset
 from utils.general import save_validation_results
 import numpy as np
+from utils.visual_config import get_visual_config
 
 def train_one_epoch(
     model, 
