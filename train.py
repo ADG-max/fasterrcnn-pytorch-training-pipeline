@@ -574,7 +574,9 @@ def main(args):
             save_valid_preds=SAVE_VALID_PREDICTIONS,
             out_dir=OUT_DIR,
             classes=CLASSES,
-            colors=COLORS
+            colors=COLORS,
+            label_bg=LABEL_BG,
+            label_text_color=LABEL_TEXT_COLOR
         )
 
         # Append the current epoch's batch-wise losses to the `train_loss_list`.
