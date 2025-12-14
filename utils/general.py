@@ -78,7 +78,7 @@ class SaveBestModel:
                 'model_name': model_name
                 }, f"{OUT_DIR}/best_model.pth")
 
-def show_tranformed_image(train_loader, device, classes, colors):
+def show_tranformed_image(train_loader, device, classes, colors, label_bg, label_text_color):
     """
     This function shows the transformed images from the `train_loader`.
     Helps to check whether the tranformed images along with the corresponding
@@ -109,9 +109,9 @@ def show_tranformed_image(train_loader, device, classes, colors):
                 rgb = (colors[cls_id] * 255).astype(np.uint8)
                 color = (int(rgb[2]), int(rgb[1]), int(rgb[0]))  # RGB → BGR
 
-                bg_color = LABEL_BG.get(class_name, (0,0,0))
+                bg_color = label_bg.get(class_name, (0,0,0))
                 bg_color = (bg_color[2], bg_color[1], bg_color[0])   # RGB → BGR
-                text_color = LABEL_TEXT_COLOR
+                text_color = label_text_color
 
                 # Draw bbox
                 cv2.rectangle(sample, (box[0], box[1]), (box[2], box[3]), color, 2)
@@ -268,7 +268,7 @@ def denormalize(x, mean=None, std=None):
     # Returns tensor of shape [B, 3, H, W].
     return torch.clamp(t, 0, 1)
 
-def save_validation_results(images, detections, counter, out_dir, classes, colors):
+def save_validation_results(images, detections, counter, out_dir, classes, colors, label_bg, label_text_color):
     """
     Function to save validation results.
     :param images: All the images from the current batch.
@@ -311,9 +311,9 @@ def save_validation_results(images, detections, counter, out_dir, classes, color
             color = (int(rgb[2]), int(rgb[1]), int(rgb[0]))  # RGB → BGR
 
             # Label background & text color
-            bg_color = LABEL_BG.get(class_name, (0,0,0))
+            bg_color = label_bg.get(class_name, (0,0,0))
             bg_color = (bg_color[2], bg_color[1], bg_color[0])   # RGB → BGR
-            text_color = LABEL_TEXT_COLOR
+            text_color = label_text_color
 
             # Draw box
             cv2.rectangle(image, (box[0], box[1]), (box[2], box[3]), color, 2)
