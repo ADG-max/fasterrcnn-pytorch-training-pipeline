@@ -14,6 +14,13 @@ python train.py --model fasterrcnn_resnet50_fpn --epochs 2 --use-train-aug --dat
 export CUDA_VISIBLE_DEVICES=0,1
 python -m torch.distributed.launch --nproc_per_node=2 --use_env train.py --data data_configs/smoke.yaml --epochs 100 --model fasterrcnn_resnet50_fpn --name smoke_training --batch 16
 """
+import torch
+import argparse
+import yaml
+import numpy as np
+import torchinfo
+import os
+
 from torch_utils.engine import (
     train_one_epoch, evaluate, utils
 )
@@ -42,13 +49,8 @@ from utils.logging import (
     wandb_save_model,
     wandb_init
 )
-
-import torch
-import argparse
-import yaml
-import numpy as np
-import torchinfo
-import os
+from utils.visual_config import get_visual_config
+COLORS = get_visual_config(CLASSES)
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -336,11 +338,6 @@ def main(args):
     BATCH_SIZE = args['batch']
     VISUALIZE_TRANSFORMED_IMAGES = args['vis_transformed']
     OUT_DIR = set_training_dir(args['name'], args['project_dir'])
-    COLORS = np.array([
-        [0.0, 0.0, 0.0],   # Background
-        [1.0, 0.0, 0.0],   # Fire = merah terang
-        [0.0, 1.0, 1.0],   # Smoke = cyan terang
-    ])
     SCALER = torch.amp.GradScaler("cuda") if args['amp'] else None
     # Set logging file.
     set_log(OUT_DIR)
