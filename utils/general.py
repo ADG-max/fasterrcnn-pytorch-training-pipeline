@@ -8,7 +8,6 @@ import random
 
 from pathlib import Path
 from utils.visual_config import get_visual_config
-LABEL_BG, LABEL_TEXT_COLOR = get_visual_config(CLASSES)
 
 plt.style.use('ggplot')
 
