@@ -177,7 +177,7 @@ class CustomDataset(Dataset):
             # Map the current object name to `classes` list to get
             # the label index and append to `labels` list.
             labels.append(self.classes.index(name))
-            
+            bndbox = obj.find('bndbox')
             # xmin = left corner x-coordinates
             xmin = float(bndbox.find('xmin').text)
             # xmax = right corner x-coordinates
