@@ -167,7 +167,7 @@ def evaluate(
             # is returned here which is again returned at the end of the
             # function for WandB logging.
             val_saved_image = save_validation_results(
-                images, outputs, counter, out_dir, classes, colors
+                images, outputs, counter, out_dir, classes, colors, LABEL_BG, LABEL_TEXT_COLOR
             )
         elif save_valid_preds == False and counter == 1:
             val_saved_image = np.ones((1, 64, 64, 3))
