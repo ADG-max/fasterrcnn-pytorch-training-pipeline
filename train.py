@@ -253,11 +253,15 @@ def main(args):
     # ==============================
     # DDP: Prevent folder creation race-condition
     # ==============================
-    if RANK != 0:
-        torch.distributed.barrier()
+    if args['distributed']:
+        if RANK != 0:
+            torch.distributed.barrier()
+        else:
+            os.makedirs('outputs/training', exist_ok=True)
+            torch.distributed.barrier()
     else:
+        # non-DDP safe
         os.makedirs('outputs/training', exist_ok=True)
-        torch.distributed.barrier()
 
     # Initialize W&B with project name.
     if not args['disable_wandb']:
