@@ -543,7 +543,7 @@ def main(args):
     if args['stage'] == 'stage2':
         for name, param in model.backbone.named_parameters():
             if "layer4" not in name:   # ResNet50
-            param.requires_grad = False
+                param.requires_grad = False
 
     if args['cosine_annealing']:
         warmup_epochs = 3
