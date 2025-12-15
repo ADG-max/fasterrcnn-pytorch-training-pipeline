@@ -224,6 +224,11 @@ def parse_opt():
         default=None,
         choices=['SGD', 'AdamW']
     )
+    parser.add_argument(
+        '--stage',
+        default='stage2',
+        choices=['stage1', 'stage2']
+    )
 
     args = vars(parser.parse_args())
     return args
@@ -356,7 +361,8 @@ def main(args):
         use_train_aug=args['use_train_aug'],
         mosaic=args['mosaic'],
         square_training=args['square_training'],
-        label_type=args['label_type']
+        label_type=args['label_type'],
+        stage=args['stage']
     )
     valid_dataset = create_valid_dataset(
         VALID_DIR_IMAGES, 
@@ -520,6 +526,10 @@ def main(args):
         # LOAD THE OPTIMIZER STATE DICTIONARY FROM THE CHECKPOINT.
         print('Loading optimizer state dictionary...')
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
+    if args['stage'] == 'stage2':
+        for name, param in model.backbone.named_parameters():
+            param.requires_grad = False
 
     if args['cosine_annealing']:
         warmup_epochs = 3
