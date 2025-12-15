@@ -561,7 +561,8 @@ def create_train_dataset(
     use_train_aug=False,
     mosaic=1.0,
     square_training=False,
-    label_type='pascal_voc'
+    label_type='pascal_voc',
+    stage="stage2"
 ):
     train_dataset = CustomDataset(
         train_dir_images, 
@@ -573,7 +574,8 @@ def create_train_dataset(
         train=True, 
         mosaic=mosaic,
         square_training=square_training,
-        label_type=label_type
+        label_type=label_type,
+        stage=stage
     )
     return train_dataset
 def create_valid_dataset(
