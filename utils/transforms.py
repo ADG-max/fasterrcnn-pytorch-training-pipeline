@@ -19,45 +19,74 @@ def resize(im, img_size=640, square=False):
     return im
 
 # Define the training tranforms
-def get_train_aug():
+def get_train_aug_stage1():
     return A.Compose([
         A.HorizontalFlip(p=0.5),
         A.ShiftScaleRotate(
-            shift_limit=0.03,
-            scale_limit=0.10,     
-            rotate_limit=7,
+            shift_limit=0.05,
+            scale_limit=0.15,
+            rotate_limit=10,
             border_mode=cv2.BORDER_REFLECT_101,
-            p=0.40
+            p=0.5
         ),
         A.RandomResizedCrop(
             height=640, width=640,
-            scale=(0.85, 1.0),
-            ratio=(0.9, 1.1),
-            p=0.15
+            scale=(0.75, 1.0),
+            ratio=(0.85, 1.15),
+            p=0.3
         ),
-        A.MotionBlur(p=0.25),
-        A.GaussianBlur(p=0.25),
-        A.RandomBrightnessContrast(
-            brightness_limit=0.20,
-            contrast_limit=0.20,
-            p=0.50
-        ),
-        A.ColorJitter(
-            brightness=0.2,
-            contrast=0.2,
-            saturation=0.2,
-            hue=0.02,
-            p=0.40
-        ),
-        A.RandomFog(p=0.10),
-        A.RandomGamma(p=0.20),
-        ToTensorV2(p=1.0),
+        A.MotionBlur(p=0.3),
+        A.GaussianBlur(p=0.3),
+        A.RandomBrightnessContrast(p=0.5),
+        A.ColorJitter(p=0.5),
+        A.RandomFog(p=0.15),
+        A.RandomGamma(p=0.25),
+        ToTensorV2(),
     ], bbox_params=A.BboxParams(
         format='pascal_voc',
         label_fields=['labels'],
         min_visibility=0.10,
         min_area=16
     ))
+
+def get_train_aug_stage2():
+    return A.Compose([
+        A.HorizontalFlip(p=0.5),
+        A.ShiftScaleRotate(
+            shift_limit=0.02,
+            scale_limit=0.05,
+            rotate_limit=5,
+            border_mode=cv2.BORDER_REFLECT_101,
+            p=0.3
+        ),
+        A.RandomBrightnessContrast(
+            brightness_limit=0.10,
+            contrast_limit=0.10,
+            p=0.3
+        ),
+        A.ColorJitter(
+            brightness=0.1,
+            contrast=0.1,
+            saturation=0.1,
+            hue=0.01,
+            p=0.3
+        ),
+        ToTensorV2(),
+    ], bbox_params=A.BboxParams(
+        format='pascal_voc',
+        label_fields=['labels'],
+        min_visibility=0.20,
+        min_area=32
+    ))
+
+def get_train_aug(stage="stage2"):
+    """
+    Entry point augmentation.
+    """
+    if stage == "stage1":
+        return get_train_aug_stage1()
+    else:
+        return get_train_aug_stage2()
 
 def get_train_transform():
     return A.Compose([
