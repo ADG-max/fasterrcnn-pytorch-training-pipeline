@@ -385,37 +385,34 @@ def main(args):
             valid_dataset, shuffle=False
         )
     else:
-        # Ambil label per bbox
-        labels = np.array(train_dataset.bbox_labels)
-        valid_idx = labels >= 0
-        filtered_labels = labels[valid_idx]
-        
-        if args['stage'] == 'stage1':
-            # Auto balance berdasarkan distribusi data
+        # ===== Non-distributed (single GPU / CPU) =====
+        # Ambil label per image
+        if args['stage'] == "stage1":
+            labels = np.array(train_dataset.image_labels)
+            valid_idx = labels >= 0
+            filtered_labels = labels[valid_idx]
+    
             class_counts = np.bincount(filtered_labels)
             class_counts[class_counts == 0] = 1
             class_weights = 1.0 / class_counts
-        
-        elif args['stage'] == 'stage2':
-            # Manual suppression untuk "other"
-            class_weights = np.ones(NUM_CLASSES)
-        
-            FIRE_ID  = CLASSES.index('fire')
-            SMOKE_ID = CLASSES.index('smoke')
-            OTHER_ID = CLASSES.index('other')
-        
-            class_weights[FIRE_ID]  = 1.0
-            class_weights[SMOKE_ID] = 1.0
-            class_weights[OTHER_ID] = 0.3
-        
-        sample_weights = class_weights[filtered_labels]
-        
+    
+            image_weights = np.zeros(len(labels))
+            image_weights[valid_idx] = class_weights[filtered_labels]
+            image_weights[~valid_idx] = 0.2  # background rendah
+    
+        else:  # stage2
+            image_weights = np.ones(len(train_dataset))
+    
+            for i, ratio in enumerate(train_dataset.image_other_ratio):
+                if ratio > 0.5:
+                    image_weights[i] = 0.3
+    
         train_sampler = WeightedRandomSampler(
-            weights=sample_weights,
-            num_samples=len(filtered_labels),
+            weights=image_weights,
+            num_samples=len(image_weights),
             replacement=True
         )
-
+    
         valid_sampler = SequentialSampler(valid_dataset)
 
     train_loader = create_train_loader(
