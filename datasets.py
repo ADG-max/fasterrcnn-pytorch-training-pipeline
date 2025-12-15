@@ -56,22 +56,46 @@ class CustomDataset(Dataset):
         self.all_images = [image_path.split(os.path.sep)[-1] for image_path in self.all_image_paths]
         self.all_images = sorted(self.all_images)
         
-        # Collect labels per bbox for WeightedRandomSampler
-        self.bbox_labels = []  # list semua label bbox
+        # Collect labels per image for WeightedRandomSampler
+        self.image_labels = []
+        self.image_other_ratio = []  # hanya dipakai stage2
+        
         for img in self.all_images:
             xml_path = os.path.join(self.labels_path, os.path.splitext(img)[0] + ".xml")
             tree = et.parse(xml_path)
             root = tree.getroot()
         
-            for obj in root.findall("object"):
-                name = obj.find("name").text.strip()
-        
-                if self.stage == "stage1":
+            if self.stage == "stage1":
+                has_fire_smoke = False
+                for obj in root.findall("object"):
+                    name = obj.find("name").text.strip()
                     if name in ["fire", "smoke"]:
-                        self.bbox_labels.append(1)
+                        has_fire_smoke = True
+                        break
+        
+                if has_fire_smoke:
+                    # fire_smoke ada di CLASSES index 1
+                    self.image_labels.append(self.classes.index("fire_smoke"))
                 else:
-                    if name in self.classes:
-                        self.bbox_labels.append(self.classes.index(name))
+                    self.image_labels.append(-1)  # background-only
+        
+            else:  # ================= STAGE 2 =================
+                counts = {"fire": 0, "smoke": 0, "other": 0}
+                for obj in root.findall("object"):
+                    name = obj.find("name").text.strip()
+                    if name in counts:
+                        counts[name] += 1
+        
+                total = sum(counts.values())
+                other_ratio = counts["other"] / max(1, total)
+                self.image_other_ratio.append(other_ratio)
+        
+                if counts["fire"] > 0:
+                    self.image_labels.append(self.classes.index("fire"))
+                elif counts["smoke"] > 0:
+                    self.image_labels.append(self.classes.index("smoke"))
+                else:
+                    self.image_labels.append(self.classes.index("other"))
 
         # Remove all annotations and images when no object is present.
         if self.label_type == 'pascal_voc':
