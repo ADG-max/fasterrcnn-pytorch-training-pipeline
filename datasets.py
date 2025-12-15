@@ -59,7 +59,6 @@ class CustomDataset(Dataset):
         # Collect labels per image for WeightedRandomSampler
         self.image_labels = []
         self.image_other_ratio = []  # hanya dipakai stage2
-        
         for img in self.all_images:
             xml_path = os.path.join(self.labels_path, os.path.splitext(img)[0] + ".xml")
             tree = et.parse(xml_path)
