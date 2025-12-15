@@ -29,7 +29,8 @@ class CustomDataset(Dataset):
         train=False, 
         mosaic=1.0,
         square_training=False,
-        label_type='pascal_voc'
+        label_type='pascal_voc',
+        stage="stage2"
     ):
         self.transforms = transforms
         self.use_train_aug = use_train_aug
@@ -46,6 +47,7 @@ class CustomDataset(Dataset):
         self.mosaic = mosaic
         self.log_annot_issue_y = True
         self.label_type = label_type
+        self.stage = stage
         
         # get all the image paths in sorted order
         for file_type in self.image_file_types:
@@ -61,10 +63,15 @@ class CustomDataset(Dataset):
             tree = et.parse(xml_path)
             root = tree.getroot()
         
-            for obj in root.findall('object'):
-                name = obj.find('name').text.strip()
-                if name in self.classes:
-                    self.bbox_labels.append(self.classes.index(name))
+            for obj in root.findall("object"):
+                name = obj.find("name").text.strip()
+        
+                if self.stage == "stage1":
+                    if name in ["fire", "smoke"]:
+                        self.bbox_labels.append(1)
+                else:
+                    if name in self.classes:
+                        self.bbox_labels.append(self.classes.index(name))
 
         # Remove all annotations and images when no object is present.
         if self.label_type == 'pascal_voc':
@@ -171,12 +178,19 @@ class CustomDataset(Dataset):
         for obj in root.findall('object'):
             name = obj.find('name').text.strip()
         
-            # SKIP class yang TIDAK ADA di CLASSES (misalnya "other")
-            if name not in self.classes:
-                continue
-            # Map the current object name to `classes` list to get
-            # the label index and append to `labels` list.
-            labels.append(self.classes.index(name))
+            if self.stage == "stage1":
+                # Stage 1: fire + smoke → 1 (fire_smoke)
+                if name in ["fire", "smoke"]:
+                    labels.append(1)
+                else:
+                    continue   # other DIABAIKAN di stage 1
+        
+            else:
+                # Stage 2: fire / smoke / other
+                if name not in self.classes:
+                    continue
+                labels.append(self.classes.index(name))
+                
             bndbox = obj.find('bndbox')
             # xmin = left corner x-coordinates
             xmin = float(bndbox.find('xmin').text)
