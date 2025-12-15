@@ -75,6 +75,12 @@ if __name__ == '__main__':
               single images to square shape first then puts them on a \
               square canvas.'
     )
+    parser.add_argument(
+        '--stage',
+        default='stage2',
+        choices=['stage1', 'stage2'],
+        help='dataset stage (must match training stage)'
+    )
     args = vars(parser.parse_args())
 
     # Load the data configurations
@@ -111,7 +117,8 @@ if __name__ == '__main__':
                 VALID_DIR_LABELS, 
                 IMAGE_SIZE, 
                 COCO_91_CLASSES, 
-                square_training=args['square_training']
+                square_training=args['square_training'],
+                stage=args['stage']
             )
 
     # Load weights.
@@ -132,7 +139,8 @@ if __name__ == '__main__':
             VALID_DIR_LABELS, 
             IMAGE_SIZE, 
             CLASSES,
-            square_training=args['square_training']
+            square_training=args['square_training'],
+            stage=args['stage']
         )
     model.to(DEVICE).eval()
     
