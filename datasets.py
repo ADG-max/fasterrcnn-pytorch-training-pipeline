@@ -607,7 +607,8 @@ def create_valid_dataset(
     img_size, 
     classes,
     square_training=False,
-    label_type='pascal_voc'
+    label_type='pascal_voc',
+    stage="stage2"
 ):
     valid_dataset = CustomDataset(
         valid_dir_images, 
@@ -617,7 +618,8 @@ def create_valid_dataset(
         get_valid_transform(),
         train=False, 
         square_training=square_training,
-        label_type=label_type
+        label_type=label_type,
+        stage=stage
     )
     return valid_dataset
 
