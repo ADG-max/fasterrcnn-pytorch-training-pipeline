@@ -385,14 +385,27 @@ def main(args):
         labels = np.array(train_dataset.bbox_labels)
         valid_idx = labels >= 0
         filtered_labels = labels[valid_idx]
-    
-        # Hitung jumlah kelas
-        class_counts = np.bincount(filtered_labels)
-        class_counts[class_counts == 0] = 1
-        class_weights = 1.0 / class_counts
+        
+        if args['stage'] == 'stage1':
+            # Auto balance berdasarkan distribusi data
+            class_counts = np.bincount(filtered_labels)
+            class_counts[class_counts == 0] = 1
+            class_weights = 1.0 / class_counts
+        
+        elif args['stage'] == 'stage2':
+            # Manual suppression untuk "other"
+            class_weights = np.ones(NUM_CLASSES)
+        
+            FIRE_ID  = CLASSES.index('fire')
+            SMOKE_ID = CLASSES.index('smoke')
+            OTHER_ID = CLASSES.index('other')
+        
+            class_weights[FIRE_ID]  = 1.0
+            class_weights[SMOKE_ID] = 1.0
+            class_weights[OTHER_ID] = 0.3
+        
         sample_weights = class_weights[filtered_labels]
-    
-        # Sampler
+        
         train_sampler = WeightedRandomSampler(
             weights=sample_weights,
             num_samples=len(filtered_labels),
