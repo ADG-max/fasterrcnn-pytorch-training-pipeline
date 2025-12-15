@@ -395,14 +395,12 @@ def main(args):
             class_counts = np.bincount(filtered_labels)
             class_counts[class_counts == 0] = 1
             class_weights = 1.0 / class_counts
-    
             image_weights = np.zeros(len(labels))
             image_weights[valid_idx] = class_weights[filtered_labels]
             image_weights[~valid_idx] = 0.2  # background rendah
     
         else:  # stage2
             image_weights = np.ones(len(train_dataset))
-    
             for i, ratio in enumerate(train_dataset.image_other_ratio):
                 if ratio > 0.5:
                     image_weights[i] = 0.3
@@ -412,7 +410,6 @@ def main(args):
             num_samples=len(image_weights),
             replacement=True
         )
-    
         valid_sampler = SequentialSampler(valid_dataset)
 
     train_loader = create_train_loader(
