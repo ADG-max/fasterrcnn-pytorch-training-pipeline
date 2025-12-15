@@ -374,7 +374,8 @@ def main(args):
         IMAGE_SIZE, 
         CLASSES,
         square_training=args['square_training'],
-        label_type=args['label_type']
+        label_type=args['label_type'],
+        stage=args['stage']
     )
     print('Creating data loaders')
     if args['distributed']:
