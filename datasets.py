@@ -510,7 +510,7 @@ class CustomDataset(Dataset):
         bboxes = target['boxes'].cpu().numpy().tolist()
 
         if self.use_train_aug: # Use train augmentation if argument is passed.
-            train_aug = get_train_aug()
+            train_aug = get_train_aug(stage=self.stage)
             sample = train_aug(image=image_resized,
                                      bboxes=target['boxes'],
                                      labels=labels)
