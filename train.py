@@ -403,8 +403,18 @@ def main(args):
         else:  # stage2
             image_weights = np.ones(len(train_dataset))
             for i, ratio in enumerate(train_dataset.image_other_ratio):
-                if ratio > 0.5:
-                    image_weights[i] = 0.3
+                label = train_dataset.image_labels[i]
+            
+                if label == CLASSES.index("other"):
+                    # pure other image
+                    if ratio > 0.7:
+                        image_weights[i] = 0.5   # ringan, JANGAN 0.3
+                    else:
+                        image_weights[i] = 0.8
+                elif label == CLASSES.index("fire"):
+                    image_weights[i] = 1.1   # sedikit boost fire
+                elif label == CLASSES.index("smoke"):
+                    image_weights[i] = 1.0
     
         train_sampler = WeightedRandomSampler(
             weights=image_weights,
