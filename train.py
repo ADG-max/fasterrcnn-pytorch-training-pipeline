@@ -278,7 +278,7 @@ def main(args):
         counts = defaultdict(int)
     
         xml_files = [f for f in os.listdir(xml_dir) if f.endswith('.xml')]
-        print(f"\n📂 Total XML files di {xml_dir}: {len(xml_files)}")
+        print(f"\n Total XML files di {xml_dir}: {len(xml_files)}")
     
         for xml_file in xml_files:
             xml_path = os.path.join(xml_dir, xml_file)
@@ -299,7 +299,7 @@ def main(args):
     # Ambil direktori dari YAML
     train_xml_dir = data_configs['TRAIN_DIR_LABELS']
     valid_xml_dir = data_configs['VALID_DIR_LABELS']
-    test_xml_dir  = data_configs['TEST_DIR_LABELS']
+    test_xml_dir  = data_configs.get('TEST_DIR_LABELS', None)
     
     # background tidak dihitung karena tidak ada di XML
     VOC_CLASSES = [c for c in data_configs["CLASSES"] if c != "__background__"]
@@ -310,19 +310,28 @@ def main(args):
     
     train_counts = count_classes_from_voc(train_xml_dir, VOC_CLASSES)
     valid_counts = count_classes_from_voc(valid_xml_dir, VOC_CLASSES)
-    test_counts  = count_classes_from_voc(test_xml_dir, VOC_CLASSES)
+    test_counts = None
+    if test_xml_dir is not None and os.path.exists(test_xml_dir):
+        test_counts = count_classes_from_voc(test_xml_dir, VOC_CLASSES)
     
     print("\n=== DISTRIBUSI TRAIN ===")
     print(train_counts)
     print("\n=== DISTRIBUSI VALID ===")
     print(valid_counts)
-    print("\n=== DISTRIBUSI TEST ===")
-    print(test_counts)
+    if test_counts is not None:
+        print("\n=== DISTRIBUSI TEST ===")
+        print(test_counts)
+    else:
+        print("\n=== DISTRIBUSI TEST ===")
+        print("Test set TIDAK disediakan (di-skip)")
     
     # Total
     total_counts = defaultdict(int)
-    for d in (train_counts, valid_counts, test_counts):
+    for d in (train_counts, valid_counts):
         for k, v in d.items():
+            total_counts[k] += v
+    if test_counts is not None:
+        for k, v in test_counts.items():
             total_counts[k] += v
     
     print("\n=== TOTAL DISTRIBUSI ===")
