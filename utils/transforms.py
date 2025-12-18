@@ -31,12 +31,12 @@ def get_train_aug_stage1():
         ),
         A.RandomResizedCrop(
             height=640, width=640,
-            scale=(0.75, 1.0),
+            scale=(0.8, 1.0),
             ratio=(0.85, 1.15),
             p=0.3
         ),
-        A.MotionBlur(p=0.3),
-        A.GaussianBlur(p=0.3),
+        A.MotionBlur(p=0.2),
+        A.GaussianBlur(p=0.2),
         A.RandomBrightnessContrast(p=0.5),
         A.ColorJitter(p=0.5),
         A.RandomFog(p=0.15),
@@ -71,11 +71,18 @@ def get_train_aug_stage2():
             hue=0.01,
             p=0.3
         ),
+        A.HueSaturationValue(
+            hue_shift_limit=3,
+            sat_shift_limit=5,
+            val_shift_limit=5,
+            p=0.2
+        ),
+        A.CLAHE(clip_limit=2.0, p=0.3),
         ToTensorV2(),
     ], bbox_params=A.BboxParams(
         format='pascal_voc',
         label_fields=['labels'],
-        min_visibility=0.20,
+        min_visibility=0.25,
         min_area=32
     ))
 
