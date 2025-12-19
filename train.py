@@ -699,28 +699,30 @@ def main(args):
         )
 
         # Save mAP plot using TensorBoard.
-        tensorboard_map_log(
-            name='mAP', 
-            val_map_05=np.array(val_map_05), 
-            val_map=np.array(val_map),
-            writer=writer,
-            epoch=epoch
-        )
+        if not skip_evaluation:
+            tensorboard_map_log(
+                name='mAP', 
+                val_map_05=np.array(val_map_05), 
+                val_map=np.array(val_map),
+                writer=writer,
+                epoch=epoch
+            )
 
-        coco_log(OUT_DIR, stats)
-        csv_log(
-            OUT_DIR, 
-            stats, 
-            epoch,
-            train_loss_list,
-            loss_cls_list,
-            loss_box_reg_list,
-            loss_objectness_list,
-            loss_rpn_list
-        )
+        if not skip_evaluation:
+            coco_log(OUT_DIR, stats)
+            csv_log(
+                OUT_DIR, 
+                stats, 
+                epoch,
+                train_loss_list,
+                loss_cls_list,
+                loss_box_reg_list,
+                loss_objectness_list,
+                loss_rpn_list
+            )
 
         # WandB logging.
-        if not args['disable_wandb']:
+        if not args['disable_wandb'] and not skip_evaluation:
             wandb_log(
                 train_loss_hist.value,
                 batch_loss_list,
