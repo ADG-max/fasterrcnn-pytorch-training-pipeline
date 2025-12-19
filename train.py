@@ -441,6 +441,11 @@ def main(args):
     print(f"Number of training samples: {len(train_dataset)}")
     print(f"Number of validation samples: {len(valid_dataset)}\n")
 
+    if args['stage'] == 'stage1':
+        skip_evaluation = True
+    else:
+        skip_evaluation = False
+    
     if VISUALIZE_TRANSFORMED_IMAGES:
         show_tranformed_image(train_loader, DEVICE, CLASSES, COLORS)
 
@@ -609,17 +614,22 @@ def main(args):
             scaler=SCALER
         )
 
-        stats, val_pred_image = evaluate(
-            model, 
-            valid_loader, 
-            device=DEVICE,
-            save_valid_preds=SAVE_VALID_PREDICTIONS,
-            out_dir=OUT_DIR,
-            classes=CLASSES,
-            colors=COLORS,
-            label_bg=LABEL_BG,
-            label_text_color=LABEL_TEXT_COLOR
-        )
+        if skip_evaluation:
+            # Dummy values to keep training pipeline alive
+            stats = [0.0, 0.0]   # [mAP, mAP@0.5]
+            val_pred_image = None
+        else:
+            stats, val_pred_image = evaluate(
+                model, 
+                valid_loader, 
+                device=DEVICE,
+                save_valid_preds=SAVE_VALID_PREDICTION_IMAGES,
+                out_dir=OUT_DIR,
+                classes=CLASSES,
+                colors=COLORS,
+                label_bg=LABEL_BG,
+                label_text_color=LABEL_TEXT_COLOR
+            )
 
         # Append the current epoch's batch-wise losses to the `train_loss_list`.
         train_loss_list.extend(batch_loss_list)
