@@ -623,7 +623,7 @@ def main(args):
                 model, 
                 valid_loader, 
                 device=DEVICE,
-                save_valid_preds=SAVE_VALID_PREDICTION_IMAGES,
+                save_valid_preds=SAVE_VALID_PREDICTIONS,
                 out_dir=OUT_DIR,
                 classes=CLASSES,
                 colors=COLORS,
