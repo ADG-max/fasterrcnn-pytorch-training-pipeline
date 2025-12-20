@@ -77,7 +77,6 @@ def get_train_aug_stage2():
             val_shift_limit=5,
             p=0.2
         ),
-        A.CLAHE(clip_limit=2.0, p=0.3),
         ToTensorV2(),
     ], bbox_params=A.BboxParams(
         format='pascal_voc',
